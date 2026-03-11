@@ -1,0 +1,36 @@
+{
+  "name": "online-uno-match",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node --loader ts-node/esm src/server/server.ts",
+    "build": "tsc",
+    "start": "node dist/server/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thjaed/online-uno-match.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/thjaed/online-uno-match/issues"
+  },
+  "homepage": "https://github.com/thjaed/online-uno-match#readme",
+  "dependencies": {
+    "express": "^5.2.1",
+    "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.4.0",
+    "@types/ws": "^8.18.1",
+    "eslint": "^10.0.3",
+    "prettier": "^3.8.1",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.9.3"
+  }
+}
