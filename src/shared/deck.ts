@@ -8,7 +8,7 @@ function shuffle(deck: Card[]): Card[] {
     return deck
 }
 
-function createDeck(): Card[] {
+export function createDeck(): Card[] {
     let deck: Card[] = []
     const colours: Colour[] = ["red", "blue", "green", "yellow"]
     const numbers: NumberValue[] = [1, 2, 3, 4, 5, 6, 7, 8, 9]
@@ -59,9 +59,3 @@ function createDeck(): Card[] {
 
     return shuffle(deck)
 }
-
-// demo
-const deck = createDeck()
-console.log(deck)
-console.log("\n")
-console.log(deck.length)
