@@ -6,7 +6,7 @@ function placeCardDemo() {
     let players: Player[] = []
 
     for (let i = 1; i < player_count + 1; i++) {
-        players.push(new Player(i, `Player ${i}`))
+        players.push(new Player(i))
     }
 
     const game = new Game(players)
@@ -21,4 +21,8 @@ function placeCardDemo() {
         console.log("Rejected")
     }
     console.log(`\n Discard Pile: ${JSON.stringify(game.discard)}\n`)
+
+    console.log(game.getPublicState(3))
 }
+
+placeCardDemo()

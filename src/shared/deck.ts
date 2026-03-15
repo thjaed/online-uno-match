@@ -1,6 +1,6 @@
 import { type Card, type NumberCard, type Colour, type NumberValue, type ActionValue, type WildValue } from "./card.ts"
 
-function shuffle(deck: Card[]): Card[] {
+export function shuffle(deck: Card[]): Card[] {
     for (let i = deck.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [deck[i]!, deck[j]!] = [deck[j]!, deck[i]!]
