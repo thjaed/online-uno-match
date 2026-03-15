@@ -1,4 +1,4 @@
-import { type Card, type NumberCard, type Colour, type NumberValue, type ActionValue, type WildValue } from "./card.ts"
+import { type Card, type NumberCard, type Colour, type NumberValue, type ActionValue, type WildValue } from "../types/game.ts"
 
 export function shuffle(deck: Card[]): Card[] {
     for (let i = deck.length - 1; i > 0; i--) {

@@ -21,4 +21,3 @@ export interface WildCard {
 }
 
 export type Card = NumberCard | ActionCard | WildCard
-
