@@ -1,6 +1,6 @@
-import { type Card, type Colour } from"../types/game.ts"
-import { Player } from "../server/player.ts"
-import { createDeck, shuffle } from "./deck.ts"
+import { type Card, type Colour } from"../types/game.js"
+import { Player } from "../server/player.js"
+import { createDeck, shuffle } from "./deck.js"
 
 export class Game {
     players: Player[]

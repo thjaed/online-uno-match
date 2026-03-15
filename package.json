@@ -4,8 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "node --loader ts-node/esm src/server/server.ts",
-    "build": "tsc",
+    "watch": "tsc --watch --project tsconfig.json",
+    "serve": "nodemon dist/server/server.js",
+    "dev": "concurrently \"npm run watch\" \"npm run serve\"",
+    "build": "tsc --project tsconfig.json",
     "start": "node dist/server/server.js"
   },
   "repository": {
@@ -28,7 +30,9 @@
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^25.4.0",
+    "concurrently": "^9.2.1",
     "eslint": "^10.0.3",
+    "nodemon": "^3.1.14",
     "prettier": "^3.8.1",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3"

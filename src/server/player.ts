@@ -1,4 +1,4 @@
-import { type Card } from "../types/game.ts"
+import { type Card } from "../types/game.js"
 
 export class Player {
     id: number
