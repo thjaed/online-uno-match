@@ -1,28 +1,25 @@
 import type { Socket } from "socket.io-client"
-declare const io: () => Socket
+import type { ClientToServerEvents } from "../types/events.js"
+
+declare const io: () => Socket<ClientToServerEvents>
 
 const socket = io()
 
-const create_room_btn = document.getElementById("create_room_btn")
-const join_room_btn = document.getElementById("join_room_btn")
-
-function joinRoom() {
-    socket.emit("join_room")
+function createRoom(data: Parameters<ClientToServerEvents["create_room"]>[0]) {
+    socket.emit("create_room", data)
 }
 
-function createRoom() {
-    socket.emit("create_room")
-}
-
-
-create_room_btn?.addEventListener("click", () => {
-    createRoom()
+document.getElementById("create_room_page_btn")?.addEventListener("click", () => {
+    window.location.href = "create_room.html"
 })
 
-join_room_btn?.addEventListener("click", () => {
-    joinRoom()
-})
+document.getElementById("create_room_btn")?.addEventListener("click", () => {
+    const player_name = (document.getElementById("player_name") as HTMLInputElement).value
 
-socket.on("world", () => {
-    console.log("world received")
+    createRoom({
+        player_name: player_name
+    })
+    
+    window.location.href = "index.html"
+
 })

@@ -1,4 +1,4 @@
-import { type Card, type Colour } from"../types/game.js"
+import { type Card, type Colour } from "../types/game.js"
 import { Player } from "../server/player.js"
 import { createDeck, shuffle } from "./deck.js"
 
@@ -12,8 +12,8 @@ export class Game {
     state: "waiting" | "playing" | "finished"
     winner: Player | null
 
-    constructor(players: Player[]) {
-        this.players = players
+    constructor(players?: Player[]) {
+        players ? this.players = players : this.players = []
         this.deck = []
         this.discard = []
         this.currentPlayerIndex = 0
@@ -68,14 +68,14 @@ export class Game {
             return true
         } else if ((top.type == "wild") && (this.colour_effect === card.colour)) { // is same colour as colour effect
             return true
-        }  else if ((top.type !== "wild") && (card.colour === top.colour)) { // is same colour as top
+        } else if ((top.type !== "wild") && (card.colour === top.colour)) { // is same colour as top
             return true
         } else {
             return false
         }
     }
 
-    placeCard(player_id: number, hand_index: number, chosen_colour?: Colour) {
+    placeCard(player_id: string, hand_index: number, chosen_colour?: Colour) {
         if (this.state !== "playing") {
             throw new Error("Game not active")
         }
@@ -172,7 +172,7 @@ export class Game {
         return this.deck.pop()!
     }
 
-    drawForPlayer(player_id: number) {
+    drawForPlayer(player_id: string) {
         if (this.state !== "playing") {
             throw new Error("Game not active")
         }
@@ -192,7 +192,7 @@ export class Game {
         this.currentPlayerIndex = this.getNextPlayer()
     }
 
-    getPublicState(viewer_id: number) {
+    getPublicState(viewer_id: string) {
         const viewer = this.players.find(x => x.id === viewer_id)!
 
         if (!viewer) {
@@ -208,7 +208,7 @@ export class Game {
             const hand_size = player.hand.length
             const index = i
 
-            const public_player = {"id": id, "handSize": hand_size, "index": index}
+            const public_player = { "id": id, "handSize": hand_size, "index": index }
             players_public.push(public_player)
         }
 
