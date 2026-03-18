@@ -3,6 +3,7 @@ import type { User } from "../server/player.js"
 
 export interface ClientToServerEvents {
     create_room: (data: { player_name: string }) => void
+    join_room: (data: { room_code: string, player_name: string }) => void
 }
 
 export interface ServerToClientEvents {

@@ -15,14 +15,58 @@ export class Room {
         users ? this.users = users : this.users = []
     }
 
-    addUser(user: User) {
+    addUser(id: string, name: string) {
+        const user = new User(id, name)
+        const player = new Player(id)
+
         this.users.push(user)
+        this.game.players.push(player)
     }
 
-    removeUser(user: User) {
-        this.users.splice(this.users.indexOf(user), 1)
+    removeUser(id: string) {
+        const user = this.users.find(u => u.id === id)
+        const player = this.game.players.find(u => u.id === id)
+
+        if (user) {
+            this.users.splice(this.users.indexOf(user), 1)
+        }
+
+        if (player) {
+            this.game.players.splice(this.game.players.indexOf(player), 1)
+        }
     }
 }
+
+export function getRoomFromUser(id: string) {
+    return (rooms.find(r => id in r.users))
+}
+
+export function removeUser(id: string) {
+    // find room that user is in
+    let room
+    for (const r of rooms) {
+        for (const u of r.users) {
+            if (u.id == id) {
+                room = r
+                break
+            }
+        }
+    }
+    if (room) {
+        if (room && room.users.length === 1) {
+            // delete if ther is only 1 user left
+            deleteRoom(room.code)
+            return {deleted: true, users_left: false}
+        } else if (room) {
+            // delete the user
+            room.removeUser(id)
+            return {deleted: true, users_left: true, room: room}
+        }
+    } else {
+        return {deleted: false}
+    }
+}
+
 
 export function getRoom(code: string) {
     return (rooms.find(r => r.code === code))
@@ -45,6 +89,14 @@ export function createRoom(data: ServerCreateRoomData) {
     rooms.push(room)
 
     return room
+}
+
+export function deleteRoom(code: string) {
+    const room = getRoom(code)
+
+    if (room) {
+        rooms.splice(rooms.indexOf(room), 1)
+    }
 }
 
 export function randomRoomCode() {

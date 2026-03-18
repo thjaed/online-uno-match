@@ -9,18 +9,32 @@
 
 <body>
     <div id="home_view">
+        <h1>UNO Online</h1>
         <button id="create_room_page_btn">Create Room</button>
+        <button id="join_room_page_btn">Join Room</button>
     </div>
 
-    <div id="create_room_view">
+    <div id="create_room_view" style="display: none">
+        <h3>Create a room</h3>
         <p>Enter your player name:</p>
-        <input type="text" id="player_name"><br>
+        <input type="text" id="player_name"><br><br>
         <button id="create_room_btn">Create Room</button></p>
     </div>
 
-    <div id="lobby_view">
+    <div id="join_room_view" style="display: none">
+        <h3>Join a room</h3>
+        <p>Enter your player name:</p>
+        <input type="text" id="player_name_join"><br>
+        <p>Enter the room code:</p>
+        <input type="text" id="room_code_input"><br><br>
+        <button id="join_room_btn">Join Room</button></p>
+    </div>
+
+    <div id="lobby_view" style="display: none">
         <h3>Waiting for others to join...</h3>
         <h4 id="room_code"></h4>
+        <h3>Players</h3>
+        <div id="user_list"></div>
     </div>
 
 

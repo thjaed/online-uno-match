@@ -1,7 +1,7 @@
 import * as express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import { createRoom, randomRoomCode } from "./roomManager.js";
+import { createRoom, getRoom, removeUser, randomRoomCode } from "./roomManager.js";
 import { type ClientToServerEvents, type ServerToClientEvents } from "../types/events.js"
 
 const app = express.default();
@@ -17,20 +17,47 @@ io.on("connection", (socket) => {
             data.player_name.length < 20 &&
             data.player_name.length >= 3
         ) {
+            const code = randomRoomCode()
             const server_data = {
                 user_id: socket.id,
-                room_code: randomRoomCode(),
+                room_code: code,
                 player_name: data.player_name
             }
             const room = createRoom(server_data)
+            socket.join(code)
             console.log(`user ${server_data.player_name} with id ${socket.id} created room ${server_data.room_code}`)
             socket.emit("room_status", { room_code: room.code, users: room.users, game_state: room.game.state })
         } else {
-            socket.emit("error", { message: "Invalid input - Player name must be 3 to 20 characters."})
+            socket.emit("error", { message: "Invalid input" })
+        }
+    })
+
+    socket.on("join_room", (data) => {
+        if (typeof data.player_name === "string" &&
+            data.player_name.length < 20 &&
+            data.player_name.length >= 3 &&
+            typeof data.room_code == "string"
+        ) {
+            const room = getRoom(data.room_code)
+            if (room) {
+                room.addUser(socket.id, data.player_name)
+                socket.join(data.room_code)
+                io.to(data.room_code).emit("room_status", { room_code: room.code, users: room.users, game_state: room.game.state })
+            } else {
+                socket.emit("error", { message: "Room not found" })
+            }
+
+        } else {
+            socket.emit("error", { message: "Invalid input" })
         }
     })
 
     socket.on("disconnect", () => {
+        const remove = removeUser(socket.id)
+        if (remove && remove.deleted && remove.users_left) {
+            const room = remove.room!
+            io.to(room.code).emit("room_status", { room_code: room.code, users: room.users, game_state: room.game.state })
+        }
         console.log(`${socket.id} disconnected`)
     })
 
