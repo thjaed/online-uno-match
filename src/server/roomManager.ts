@@ -5,12 +5,12 @@ import { Player, User } from "./player.js"
 let rooms: Room[] = []
 
 export class Room {
-    id: string
+    code: string
     game: Game
     users: User[]
 
-    constructor(id: string, game: Game, users?: User[]) {
-        this.id = id
+    constructor(code: string, game: Game, users?: User[]) {
+        this.code = code
         this.game = game
         users ? this.users = users : this.users = []
     }
@@ -25,7 +25,7 @@ export class Room {
 }
 
 export function getRoom(code: string) {
-    return (rooms.find(r => r.id === code))
+    return (rooms.find(r => r.code === code))
 }
 
 export function createRoom(data: ServerCreateRoomData) {
@@ -43,6 +43,8 @@ export function createRoom(data: ServerCreateRoomData) {
 
     const room = new Room(room_code, game, [user])
     rooms.push(room)
+
+    return room
 }
 
 export function randomRoomCode() {

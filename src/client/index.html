@@ -1,13 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UNO Online</title>
 </head>
+
 <body>
-    <button id="create_room_page_btn">Create Room</button>
+    <div id="home_view">
+        <button id="create_room_page_btn">Create Room</button>
+    </div>
+
+    <div id="create_room_view">
+        <p>Enter your player name:</p>
+        <input type="text" id="player_name"><br>
+        <button id="create_room_btn">Create Room</button></p>
+    </div>
+
+    <div id="lobby_view">
+        <h3>Waiting for others to join...</h3>
+        <h4 id="room_code"></h4>
+    </div>
+
+
 </body>
 <script src="/socket.io/socket.io.js"></script>
 <script type="module" src="client.js"></script>
+
 </html>
