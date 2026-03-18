@@ -12,10 +12,12 @@ export class Player {
 
 export class User {
     id: string
+    token: string
     name: string
 
-    constructor(id: string, name: string) {
+    constructor(id: string, name: string, token: string) {
         this.id = id
         this.name = name
+        this.token = token
     }
 }

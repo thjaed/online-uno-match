@@ -8,6 +8,7 @@ export interface ClientToServerEvents {
 
 export interface ServerToClientEvents {
     error: (data: { message: string }) => void
+    auth: (data: { token: string }) => void
     room_status: (data: {
         room_code: string,
         users: User[],

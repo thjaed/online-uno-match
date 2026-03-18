@@ -3,11 +3,13 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import { createRoom, getRoom, removeUser, randomRoomCode } from "./roomManager.js";
 import { type ClientToServerEvents, type ServerToClientEvents } from "../types/events.js"
+import { randomUUID } from "crypto";
 
 const app = express.default();
 const httpServer = createServer(app);
 export const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer);
 
+const socketUserIdMap = new Map<string, string>()
 
 io.on("connection", (socket) => {
     console.log(`${socket.id} connected`)
@@ -18,14 +20,18 @@ io.on("connection", (socket) => {
             data.player_name.length >= 3
         ) {
             const code = randomRoomCode()
+            const token = randomUUID()
+            const id = randomUUID()
+            socketUserIdMap.set(socket.id, id)
             const server_data = {
-                user_id: socket.id,
+                user_id: id,
+                user_token: token,
                 room_code: code,
                 player_name: data.player_name
             }
             const room = createRoom(server_data)
             socket.join(code)
-            console.log(`user ${server_data.player_name} with id ${socket.id} created room ${server_data.room_code}`)
+            console.log(`user ${server_data.player_name} with id ${id} created room ${server_data.room_code}`)
             socket.emit("room_status", { room_code: room.code, users: room.users, game_state: room.game.state })
         } else {
             socket.emit("error", { message: "Invalid input" })
@@ -40,7 +46,10 @@ io.on("connection", (socket) => {
         ) {
             const room = getRoom(data.room_code)
             if (room) {
-                room.addUser(socket.id, data.player_name)
+                const token = randomUUID()
+                const id = randomUUID()
+                socketUserIdMap.set(socket.id, id)
+                room.addUser(id, data.player_name, token)
                 socket.join(data.room_code)
                 io.to(data.room_code).emit("room_status", { room_code: room.code, users: room.users, game_state: room.game.state })
             } else {
@@ -53,10 +62,14 @@ io.on("connection", (socket) => {
     })
 
     socket.on("disconnect", () => {
-        const remove = removeUser(socket.id)
-        if (remove && remove.deleted && remove.users_left) {
-            const room = remove.room!
-            io.to(room.code).emit("room_status", { room_code: room.code, users: room.users, game_state: room.game.state })
+        const mapping = socketUserIdMap.get(socket.id)
+        if (mapping) {
+            const remove = removeUser(mapping)
+            if (remove && remove.deleted && remove.users_left) {
+                const room = remove.room!
+                io.to(room.code).emit("room_status", { room_code: room.code, users: room.users, game_state: room.game.state })
+            }
+            socketUserIdMap.delete(socket.id)
         }
         console.log(`${socket.id} disconnected`)
     })

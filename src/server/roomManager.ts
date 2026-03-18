@@ -15,8 +15,8 @@ export class Room {
         users ? this.users = users : this.users = []
     }
 
-    addUser(id: string, name: string) {
-        const user = new User(id, name)
+    addUser(id: string, name: string, token: string) {
+        const user = new User(id, name, token)
         const player = new Player(id)
 
         this.users.push(user)
@@ -35,6 +35,18 @@ export class Room {
             this.game.players.splice(this.game.players.indexOf(player), 1)
         }
     }
+}
+
+export function getIdFromToken(token: string) {
+    for (const r of rooms) {
+        for (const u of r.users) {
+            if (u.token == token) {
+                return u.id
+            }
+        }
+    }
+    return undefined
+
 }
 
 export function getRoomFromUser(id: string) {
@@ -56,14 +68,17 @@ export function removeUser(id: string) {
         if (room && room.users.length === 1) {
             // delete if ther is only 1 user left
             deleteRoom(room.code)
-            return {deleted: true, users_left: false}
+            console.log("room deleted")
+            return { deleted: true, users_left: false }
         } else if (room) {
             // delete the user
             room.removeUser(id)
-            return {deleted: true, users_left: true, room: room}
+            console.log("user deleted, users left")
+            return { deleted: true, users_left: true, room: room }
         }
     } else {
-        return {deleted: false}
+        console.log("no user deleted")
+        return { deleted: false }
     }
 }
 
@@ -78,13 +93,12 @@ export function createRoom(data: ServerCreateRoomData) {
     if (getRoom(room_code)) {
         throw new Error("Room ID already exists")
     }
+
     const user_id = data.user_id
-    const player_name = data.player_name
+    const player = new Player(user_id)
+    const user = new User(user_id, data.player_name, data.user_token)
 
-    const player = new Player(data.user_id)
-    const user = { id: user_id, name: player_name }
     const game = new Game([player])
-
     const room = new Room(room_code, game, [user])
     rooms.push(room)
 
