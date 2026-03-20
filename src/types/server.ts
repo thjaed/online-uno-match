@@ -1,6 +1,10 @@
+import type { User } from "../server/player.js"
+
 export type ServerCreateRoomData = {
-    user_id: string
-    user_token: string
-    room_code: string
-    player_name: string
+    user: User
+    room_code: string}
+
+export type PublicUsers = {
+    id: string
+    name: string
 }

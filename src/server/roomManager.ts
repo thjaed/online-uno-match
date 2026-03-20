@@ -1,6 +1,7 @@
-import type { ServerCreateRoomData } from "../types/server.js"
+import type { ServerToClientEvents } from "../types/events.js"
+import type { PublicUsers, ServerCreateRoomData } from "../types/server.js"
 import { Game } from "./game.js"
-import { Player, User } from "./player.js"
+import type { Player, User } from "./player.js"
 
 let rooms: Room[] = []
 
@@ -15,9 +16,8 @@ export class Room {
         users ? this.users = users : this.users = []
     }
 
-    addUser(id: string, name: string, token: string) {
-        const user = new User(id, name, token)
-        const player = new Player(id)
+    addUser(user: User) {
+        const player: Player = { id: user.id, hand: [] }
 
         this.users.push(user)
         this.game.players.push(player)
@@ -50,7 +50,13 @@ export function getIdFromToken(token: string) {
 }
 
 export function getRoomFromUser(id: string) {
-    return (rooms.find(r => id in r.users))
+    for (const r of rooms) {
+        for (const u of r.users) {
+            if (u.id == id) {
+                return r
+            }
+        }
+    }
 }
 
 export function removeUser(id: string) {
@@ -68,12 +74,10 @@ export function removeUser(id: string) {
         if (room && room.users.length === 1) {
             // delete if ther is only 1 user left
             deleteRoom(room.code)
-            console.log("room deleted")
             return { deleted: true, users_left: false }
         } else if (room) {
             // delete the user
             room.removeUser(id)
-            console.log("user deleted, users left")
             return { deleted: true, users_left: true, room: room }
         }
     } else {
@@ -87,6 +91,27 @@ export function getRoom(code: string) {
     return (rooms.find(r => r.code === code))
 }
 
+export function getPublicRoomStatus(room_code: string) {
+    const room = getRoom(room_code)
+
+    if (room) {
+        let users: PublicUsers[] = []
+        for (const u of room.users) {
+            users.push({
+                name: u.name,
+                id: u.id
+            })
+        }
+            const data: Parameters<ServerToClientEvents["room_status"]>[0] = {
+                room_code: room.code,
+                public_users: users,
+                game_state: room.game.state
+            }
+
+            return data
+    }
+}
+
 export function createRoom(data: ServerCreateRoomData) {
     const room_code = data.room_code
 
@@ -94,10 +119,9 @@ export function createRoom(data: ServerCreateRoomData) {
         throw new Error("Room ID already exists")
     }
 
-    const user_id = data.user_id
-    const player = new Player(user_id)
-    const user = new User(user_id, data.player_name, data.user_token)
-
+    const user_id = data.user.id
+    const player: Player = { id: user_id, hand: [] }
+    const user: User = { id: user_id, token: data.user.token, name: data.user.name }
     const game = new Game([player])
     const room = new Room(room_code, game, [user])
     rooms.push(room)
