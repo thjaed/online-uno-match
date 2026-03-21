@@ -1,5 +1,6 @@
 import type { Socket } from "socket.io-client"
 import type { ClientToServerEvents, ServerToClientEvents } from "../types/events.js"
+import type { Colour } from "../types/game.js"
 
 declare const io: () => Socket<ServerToClientEvents, ClientToServerEvents>
 
@@ -23,12 +24,31 @@ function createRoom(data: Parameters<ClientToServerEvents["create_room"]>[0]) {
 }
 
 function joinRoom(data: Parameters<ClientToServerEvents["join_room"]>[0]) {
-    // create a room on the server
+    // join a room on the server
     socket.emit("join_room", data)
 }
 
-function startGame(data: Parameters<ClientToServerEvents["start_game"]>[0]) {
+function startGame() {
+    const data: Parameters<ClientToServerEvents["start_game"]>[0] = {
+        token: sessionStorage.getItem("token")!,
+    }
     socket.emit("start_game", data)
+}
+
+function placeCard(index: number, colour?: Colour) {
+    const data: Parameters<ClientToServerEvents["place_card"]>[0] = {
+        token: sessionStorage.getItem("token")!,
+        hand_index: index,
+        colour: colour
+    }
+    socket.emit("place_card", data)
+}
+
+function drawCard() {
+    const data: Parameters<ClientToServerEvents["draw_card"]>[0] = {
+        token: sessionStorage.getItem("token")!,
+    }
+    socket.emit("draw_card", data)
 }
 
 document.getElementById("create_room_btn")?.addEventListener("click", () => {
@@ -73,7 +93,29 @@ document.getElementById("join_room_page_btn")?.addEventListener("click", () => {
 
 document.getElementById("start_game_btn")?.addEventListener("click", () => {
     // when start game button pressed
-    startGame({ token: localStorage.getItem("token")! })
+    startGame()
+})
+
+document.getElementById("place_card_btn")?.addEventListener("click", () => {
+    // when place card button pressed
+    const index_input = (document.getElementById("place_card_index") as HTMLInputElement)
+    const colour_choice = (document.getElementById("colour_choice") as HTMLSelectElement).value
+
+    if (colour_choice) {
+        placeCard(parseInt(index_input.value), colour_choice as Colour)
+    } else {
+        placeCard(parseInt(index_input.value))
+    }
+
+
+    index_input.value = ""
+
+})
+
+document.getElementById("draw_card_btn")?.addEventListener("click", () => {
+    // when draw card button pressed
+    drawCard()
+
 })
 
 socket.on("room_status", (data) => {
@@ -86,11 +128,13 @@ socket.on("room_status", (data) => {
 
         // update player list
         document.getElementById("user_list")!.innerHTML = ''
-        const user_count = data.public_users.length
-        for (let p = 0; p < user_count; p++) {
-            const user = document.createElement("p")
-            user.innerHTML = data.public_users[p]!.name
-            document.getElementById("user_list")?.appendChild(user)
+
+        for (const user of data.public_users) {
+            sessionStorage.setItem(user.id, user.name)
+
+            const user_element = document.createElement("p")
+            user_element.innerHTML = user.name
+            document.getElementById("user_list")?.appendChild(user_element)
         }
     }
 })
@@ -101,11 +145,47 @@ socket.on("error", (data) => {
 
 socket.on("auth", (data) => {
     console.log(`got token ${data.token}`)
-    localStorage.setItem("token", data.token)
+    sessionStorage.setItem("token", data.token)
 })
 
 socket.on("game_status", (data) => {
-    console.log(JSON.stringify(data))
-    show("game_view");
-    (document.getElementById("game_data") as HTMLParagraphElement)!.textContent = JSON.stringify(data)
+    if (data.gameState === "playing") {
+        // current player
+        let curr_name
+        let curr_hand_size
+        for (const player of data.players) {
+            if (player.id === data.currentPlayerId) {
+                curr_hand_size = player.handSize
+                curr_name = sessionStorage.getItem(player.id)
+            }
+        }
+        document.getElementById("current_player")!.innerHTML = `${curr_name}'s turn (${curr_hand_size})`
+
+        // top card
+        const top_card = data.topCard
+        document.getElementById("top_card")!.innerHTML = `Top card: ${JSON.stringify(top_card)}`
+
+        // colour effect
+        if (data.colourEffect) {
+            document.getElementById("colour_effect")!.innerHTML = `Wild Colour: ${data.colourEffect}`
+        } else {
+            document.getElementById("colour_effect")!.innerHTML = ""
+        }
+        // hand list
+        document.getElementById("hand_title")!.innerHTML = `Your Hand (${data.yourHand.length}):`
+        document.getElementById("hand")!.innerHTML = ""
+
+
+        for (let i = 0; i < data.yourHand.length; i++) {
+            const card = data.yourHand[i]
+            const card_element = document.createElement("p")
+            card_element.innerHTML = `${i}: ${JSON.stringify(card)}`
+            document.getElementById("hand")?.appendChild(card_element)
+        }
+        show("game_view")
+    } else if (data.gameState === "finished" && data.winner) {
+        document.getElementById("winner")!.innerHTML = data.winner
+    }
+
+    
 })

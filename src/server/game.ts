@@ -77,27 +77,27 @@ export class Game {
 
     placeCard(player_id: string, hand_index: number, chosen_colour?: Colour) {
         if (this.state !== "playing") {
-            throw new Error("Game not active")
+            return {type: "error", message: "Game not active"}
         }
 
         const player = this.players.find(x => x.id === player_id)
 
         if (player === undefined) {
-            throw new Error("Player not found")
+            return {type: "error", message: "Player not found"}
         }
-
-        if (this.players[this.currentPlayerIndex] !== player) {
-            throw new Error("Not player's turn")
+        
+        if (this.players[this.currentPlayerIndex]?.id !== player_id) {
+            return {type: "error", message: "Not turn"}
         }
 
         if (hand_index < 0 || hand_index >= player.hand.length) {
-            throw new Error("Hand index out of bounds")
+            return {type: "error", message: "Hand index out of bounds"}
         }
 
         const card = player.hand[hand_index]!
 
         if (!(this.isCardValid(card))) {
-            throw new Error("Card not valid")
+            return {type: "error", message: "Card not valid"}
         }
 
         // move card to discard pile
@@ -106,20 +106,23 @@ export class Game {
 
         if (player.hand.length === 0) {
             this.endGame(player)
-            return player.hand
+            return {type: "success", data: player.hand}
         }
 
-        this.useEffect(card, chosen_colour)
+        const effect_response = this.useEffect(card, chosen_colour)
+
+        if (effect_response.type === "error") {
+            return effect_response
+        }
 
         if (card.value === "skip") {
             // skip next player
-            console.log(`Skipping ${this.getNextPlayer()}, Next Player: ${this.getNextPlayer(this.getNextPlayer())}`)
             this.currentPlayerIndex = this.getNextPlayer(this.getNextPlayer())
         } else {
             this.currentPlayerIndex = this.getNextPlayer()
         }
 
-        return player.hand
+        return {type: "success", data: player.hand}
     }
 
     useEffect(card: Card, chosen_colour?: Colour) {
@@ -127,10 +130,8 @@ export class Game {
         if (card.type === "action" && card.value == "reverse") {
             // reverse direction
             this.direction *= -1
-            console.log(`Reversed direction to ${this.direction}`)
 
         } else if (card.value == "draw2" || card.value == "wild_draw4") {
-            console.log(`Hand before draw: ${JSON.stringify(this.players[this.getNextPlayer()]!.hand)}`)
             // draw
             const qty = card.value == "draw2" ? 2 : 4 // set draw quantity
             const target = this.players[this.getNextPlayer()]!
@@ -139,28 +140,25 @@ export class Game {
                 // give next player a card
                 target.hand.push(this.drawCard())
             }
-
-            console.log(`Player ID ${this.players[this.getNextPlayer()]!.id} drew ${qty}`)
-            console.log(`Hand after draw: ${JSON.stringify(this.players[this.getNextPlayer()]!.hand)}`)
         }
 
         if (card.type == "wild") {
             // change colour
             if (chosen_colour) {
-                console.log(`Setting colour to ${chosen_colour}`)
                 this.colour_effect = chosen_colour
             } else {
-                throw new Error("No colour specified")
+                return {type: "error", message: "No colour specified"}
             }
         } else {
             this.colour_effect = null
         }
+
+        return { type: "success" }
     }
 
     endGame(player: Player) {
         this.state = "finished"
         this.winner = player
-        console.log(`Player ${player.id} won!`)
     }
 
     drawCard() {
@@ -174,22 +172,24 @@ export class Game {
 
     drawForPlayer(player_id: string) {
         if (this.state !== "playing") {
-            throw new Error("Game not active")
+            return {type: "error", message: "Game not active"}
         }
 
         const player = this.players.find(x => x.id === player_id)
 
         if (player === undefined) {
-            throw new Error("Player not found")
+            return {type: "error", message: "Player not found"}
         }
 
         if (this.players[this.currentPlayerIndex] !== player) {
-            throw new Error("Not player's turn")
+            return {type: "error", message: "Not your turn"}
         }
 
         player.hand.push(this.drawCard())
 
         this.currentPlayerIndex = this.getNextPlayer()
+
+        return { type: "success" }
     }
 
     getPublicState(viewer_id: string) {

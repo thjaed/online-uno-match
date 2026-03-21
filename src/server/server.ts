@@ -5,6 +5,8 @@ import { createRoom, getRoom, removeUser, randomRoomCode, getPublicRoomStatus, g
 import { type ClientToServerEvents, type ServerToClientEvents } from "../types/events.js"
 import { randomUUID } from "crypto";
 import type { User } from "./player.js";
+import { resolve } from "dns";
+import { error } from "console";
 
 const app = express.default();
 const httpServer = createServer(app);
@@ -16,7 +18,19 @@ const UserSocketIdMap = new Map<string, string>()
 function updateSocket(socket_id: string, user_id: string) {
     socketUserIdMap.set(socket_id, user_id)
     UserSocketIdMap.set(user_id, socket_id)
+}
 
+function auth(token: string, socket_id: string) {
+    if (typeof token === "string") {
+        const user_id = getIdFromToken(token)
+        if (user_id) {
+            updateSocket(socket_id, user_id)
+            return user_id
+
+        } else {
+            return undefined
+        }
+    }
 }
 
 function newUser(player_name: string) {
@@ -89,30 +103,77 @@ io.on("connection", (socket) => {
     })
 
     socket.on("start_game", (data) => {
-        const token = data.token
-        console.log(`start game from ${token}`)
-        if (typeof token == "string") {
-            const user_id = getIdFromToken(token)
-            console.log(user_id)
-            if (user_id) {
-                const room = getRoomFromUser(user_id)
-                console.log(room)
+        const user_id = auth(data.token, socket.id)
+        if (user_id) {
+            const room = getRoomFromUser(user_id)
 
-                if (room) {
-                    console.log(room.code)
-                    room.game.startGame()
-                    console.log(`started game ${room.code}`)
+            if (room) {
+                room.game.startGame()
+                console.log(`started game ${room.code}`)
 
+                for (const user of room.users) {
+                    const socket_id = UserSocketIdMap.get(user.id)
+                    if (!socket_id) return
+
+                    io.to(socket_id).emit("game_status", room.game.getPublicState(user.id))
+                }
+            }
+        } else {
+            socket.emit("error", { message: "Invalid input" })
+        }
+    })
+
+    socket.on("place_card", (data) => {
+        const user_id = auth(data.token, socket.id)
+        if (user_id &&
+            typeof data.hand_index == "number" &&
+            data.hand_index < 100 &&
+            data.hand_index >= 0) {
+            const room = getRoomFromUser(user_id)
+
+            if (room) {
+                let response
+                if (data.colour) {
+                    response = room.game.placeCard(user_id, data.hand_index, data.colour)
+                } else {
+                    response = room.game.placeCard(user_id, data.hand_index)
+                }
+                if (response.type == "error") {
+                    socket.emit("error", { message: response.message! })
+                } else {
                     for (const user of room.users) {
                         const socket_id = UserSocketIdMap.get(user.id)
-                        console.log(socket_id)
                         if (!socket_id) return
 
                         io.to(socket_id).emit("game_status", room.game.getPublicState(user.id))
                     }
                 }
+
             }
         }
+    })
+
+    socket.on("draw_card", (data) => {
+        const user_id = auth(data.token, socket.id)
+        if (user_id) {
+            const room = getRoomFromUser(user_id)
+
+            if (room) {
+                const response = room.game.drawForPlayer(user_id)
+                if (response.type == "error") {
+                    socket.emit("error", { message: response.message! })
+                } else {
+                    for (const user of room.users) {
+                        const socket_id = UserSocketIdMap.get(user.id)
+                        if (!socket_id) return
+
+                        io.to(socket_id).emit("game_status", room.game.getPublicState(user.id))
+                    }
+                }
+
+            }
+        }
+
     })
 
     socket.on("disconnect", () => {

@@ -40,7 +40,7 @@ export class Room {
 export function getIdFromToken(token: string) {
     for (const r of rooms) {
         for (const u of r.users) {
-            if (u.token == token) {
+            if (u.token === token) {
                 return u.id
             }
         }
