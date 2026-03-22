@@ -5,15 +5,16 @@ import { createRoom, getRoom, removeUser, randomRoomCode, getPublicRoomStatus, g
 import { type ClientToServerEvents, type ServerToClientEvents } from "../types/events.js"
 import { randomUUID } from "crypto";
 import type { User } from "./player.js";
-import { resolve } from "dns";
-import { error } from "console";
 
 const app = express.default();
 const httpServer = createServer(app);
-export const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer);
+export const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
+    connectionStateRecovery: {}
+});
 
 const socketUserIdMap = new Map<string, string>()
 const UserSocketIdMap = new Map<string, string>()
+const expiringUsersMap = new Map<string, any>()
 
 function updateSocket(socket_id: string, user_id: string) {
     socketUserIdMap.set(socket_id, user_id)
@@ -50,8 +51,45 @@ function newUser(player_name: string) {
     }
 }
 
+function disconnectUser(socket_id: string) {
+    const user_id = socketUserIdMap.get(socket_id)
+    if (user_id) {
+        const remove = removeUser(user_id)
+        if (remove && remove.deleted && remove.users_left) {
+            // if there are still users in the room, tell them that the user has left
+            const room = remove.room!
+            io.to(room.code).emit("room_status", getPublicRoomStatus(room.code)!)
+        }
+        expiringUsersMap.delete(user_id)
+        UserSocketIdMap.delete(user_id)
+    }
+    socketUserIdMap.delete(socket_id)
+}
+
 io.on("connection", (socket) => {
     console.log(`${socket.id} connected`)
+
+    socket.on("reconnect", (data) => {
+        const user_id = auth(data.token, socket.id)
+        if (user_id) {
+            const expiry = expiringUsersMap.get(user_id)
+            if (expiry) {
+                // clear expiry
+                clearTimeout(expiry)
+                expiringUsersMap.delete(user_id)
+            }
+            const room = getRoomFromUser(user_id)
+
+            if (room) {
+                // send data
+                socket.join(room.code)
+                io.to(room.code).emit("room_status", getPublicRoomStatus(room.code)!)
+                if (room.game.state !== "waiting") {
+                    socket.emit("game_status", room.game.getPublicState(user_id))
+                }
+            }
+        }
+    })
 
     socket.on("create_room", (data) => {
         const player_name = data.player_name
@@ -113,7 +151,7 @@ io.on("connection", (socket) => {
 
                 for (const user of room.users) {
                     const socket_id = UserSocketIdMap.get(user.id)
-                    if (!socket_id) return
+                    if (!socket_id) continue
 
                     io.to(socket_id).emit("game_status", room.game.getPublicState(user.id))
                 }
@@ -177,18 +215,15 @@ io.on("connection", (socket) => {
     })
 
     socket.on("disconnect", () => {
-        const mapping = socketUserIdMap.get(socket.id)
-        if (mapping) {
-            const remove = removeUser(mapping)
-            if (remove && remove.deleted && remove.users_left) {
-                const room = remove.room!
-                io.to(room.code).emit("room_status", getPublicRoomStatus(room.code)!)
-            }
-            socketUserIdMap.delete(socket.id)
+        const user_id = socketUserIdMap.get(socket.id)
+        if (user_id) {
+            // delete in 5 seconds, in case user reconnects
+            const userExpiry = setTimeout(disconnectUser, 5000, socket.id)
+            expiringUsersMap.set(user_id, userExpiry)
+        } else {
+            disconnectUser(socket.id)
         }
-        console.log(`${socket.id} disconnected`)
     })
-
 });
 
 httpServer.listen(8080);

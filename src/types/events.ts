@@ -3,6 +3,7 @@ import type { Colour } from "./game.js"
 import type { PublicUsers } from "./server.js"
 
 export interface ClientToServerEvents {
+    reconnect: (data: { token: string }) => void
     create_room: (data: { player_name: string }) => void
     join_room: (data: { room_code: string, player_name: string }) => void
     start_game: (data: { token: string }) => void

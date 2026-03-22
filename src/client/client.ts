@@ -5,7 +5,19 @@ import type { Colour } from "../types/game.js"
 declare const io: () => Socket<ServerToClientEvents, ClientToServerEvents>
 
 const socket = io()
-console.log(socket.id)
+
+window.onload = function() {
+    const page = sessionStorage.getItem("page")
+    const token = sessionStorage.getItem("token")
+    if (page) {
+        show(page)
+    } else {
+        show("home_view")
+    }
+    if (token) {
+        reconnect()
+    }
+}
 
 function show(viewId: string) {
     // change page view
@@ -14,10 +26,15 @@ function show(viewId: string) {
     })
 
     document.getElementById(viewId)!.style.display = "block"
+    sessionStorage.setItem("page", viewId)
 }
 
-show("home_view")
-
+function reconnect() {
+    const data: Parameters<ClientToServerEvents["reconnect"]>[0] = {
+        token: sessionStorage.getItem("token")!,
+    }
+    socket.emit("reconnect", data)
+}
 function createRoom(data: Parameters<ClientToServerEvents["create_room"]>[0]) {
     // create a room on the server
     socket.emit("create_room", data)
@@ -119,7 +136,6 @@ document.getElementById("draw_card_btn")?.addEventListener("click", () => {
 })
 
 socket.on("room_status", (data) => {
-    console.log(JSON.stringify(data))
     if (data.game_state === "waiting") {
         // room status recieved
         show("lobby_view")
@@ -144,7 +160,6 @@ socket.on("error", (data) => {
 })
 
 socket.on("auth", (data) => {
-    console.log(`got token ${data.token}`)
     sessionStorage.setItem("token", data.token)
 })
 
