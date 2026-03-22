@@ -8,62 +8,10 @@
 </head>
 
 <body>
-    <div id="home_view" style="display: none">
-        <h1>UNO Online</h1>
-        <button id="create_room_page_btn">Create Room</button>
-        <button id="join_room_page_btn">Join Room</button>
-    </div>
-
-    <div id="create_room_view" style="display: none">
-        <h3>Create a room</h3>
-        <p>Enter your player name:</p>
-        <input type="text" id="player_name"><br><br>
-        <button id="create_room_btn">Create Room</button></p>
-    </div>
-
-    <div id="join_room_view" style="display: none">
-        <h3>Join a room</h3>
-        <p>Enter your player name:</p>
-        <input type="text" id="player_name_join"><br>
-        <p>Enter the room code:</p>
-        <input type="text" id="room_code_input"><br><br>
-        <button id="join_room_btn">Join Room</button></p>
-    </div>
-
-    <div id="lobby_view" style="display: none">
-        <h3>Waiting for others to join...</h3>
-        <h4 id="room_code"></h4>
-        <h3>Players</h3>
-        <div id="user_list"></div><br>
-        <button id="start_game_btn">Start Game</button>
-    </div>
-
-    <div id="game_view" style="display: none">
-        <h2 id="winner"></h2>
-        <p id="current_player"></p>
-        <p id="top_card"></p>
-        <p id= "colour_effect"></p>
-        <p id="hand_title"></p>
-        <div id="hand"></div>
-
-        <label for="place_card_index">Card number</label>
-        <input type="number" id="place_card_index">
-        <button id="place_card_btn">Place Card</button><br>
-
-        <label for="colour_choice">Wild colour: </label>
-        <select name="colour_choice" id="colour_choice">
-            <option value="red">Red</option>
-            <option value="blue">Blue</option>
-            <option value="green">Green</option>
-            <option value="yellow">Yellow</option>
-        </select><br>
-        
-        <button id="draw_card_btn">Draw Card</button>
-    </div>
-
+    <h1>UNO Online</h1>
+    <button onclick="window.location.href='game.html?action=create'">Create Room</button>
+    <button onclick="window.location.href='game.html?action=join'">Join Room</button>
 
 </body>
-<script src="/socket.io/socket.io.js"></script>
-<script type="module" src="client.js"></script>
 
 </html>

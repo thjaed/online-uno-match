@@ -87,7 +87,10 @@ io.on("connection", (socket) => {
                 if (room.game.state !== "waiting") {
                     socket.emit("game_status", room.game.getPublicState(user_id))
                 }
+                socket.emit("reconnect_success")
             }
+        } else {
+            socket.emit("reconnect_error")
         }
     })
 

@@ -6,16 +6,36 @@ declare const io: () => Socket<ServerToClientEvents, ClientToServerEvents>
 
 const socket = io()
 
-window.onload = function() {
+
+window.addEventListener("DOMContentLoaded", async () => {
     const page = sessionStorage.getItem("page")
     const token = sessionStorage.getItem("token")
-    if (page) {
-        show(page)
-    } else {
-        show("home_view")
+
+    if (token && !window.location.search) {
+        const success = await reconnect()
+
+        if (success && page) {
+            show(page)
+            return
+        }
     }
-    if (token) {
-        reconnect()
+
+    if (window.location.search) {
+        show_page_param()
+    } else {
+        window.location.href = "/"
+    }
+
+})
+
+function show_page_param() {
+    const queryString = window.location.search
+    const urlParams = new URLSearchParams(queryString)
+
+    if (urlParams.get("action") === "create") {
+        show("create_room_view")
+    } else if (urlParams.get("action") === "join") {
+        show("join_room_view")
     }
 }
 
@@ -29,12 +49,33 @@ function show(viewId: string) {
     sessionStorage.setItem("page", viewId)
 }
 
-function reconnect() {
-    const data: Parameters<ClientToServerEvents["reconnect"]>[0] = {
-        token: sessionStorage.getItem("token")!,
-    }
-    socket.emit("reconnect", data)
+
+
+
+
+function reconnect(): Promise<boolean> {
+    return new Promise((resolve) => {
+        const data: Parameters<ClientToServerEvents["reconnect"]>[0] = {
+            token: sessionStorage.getItem("token")!,
+        }
+
+        socket.emit("reconnect", data)
+
+        const timeout = setTimeout(() => {
+            resolve(false)
+        }, 3000)
+
+        socket.once("reconnect_error", () => {
+            resolve(false)
+            sessionStorage.removeItem("token")
+        })
+
+        socket.once("reconnect_success", () => {
+            resolve(true)
+        })
+    })
 }
+
 function createRoom(data: Parameters<ClientToServerEvents["create_room"]>[0]) {
     // create a room on the server
     socket.emit("create_room", data)
@@ -46,15 +87,25 @@ function joinRoom(data: Parameters<ClientToServerEvents["join_room"]>[0]) {
 }
 
 function startGame() {
+    const token = sessionStorage.getItem("token")
+    if (!token) {
+        return false
+    }
+
     const data: Parameters<ClientToServerEvents["start_game"]>[0] = {
-        token: sessionStorage.getItem("token")!,
+        token: token,
     }
     socket.emit("start_game", data)
 }
 
 function placeCard(index: number, colour?: Colour) {
+    const token = sessionStorage.getItem("token")
+    if (!token) {
+        return false
+    }
+
     const data: Parameters<ClientToServerEvents["place_card"]>[0] = {
-        token: sessionStorage.getItem("token")!,
+        token: token,
         hand_index: index,
         colour: colour
     }
@@ -62,11 +113,20 @@ function placeCard(index: number, colour?: Colour) {
 }
 
 function drawCard() {
+    const token = sessionStorage.getItem("token")
+    if (!token) {
+        return false
+    }
+
     const data: Parameters<ClientToServerEvents["draw_card"]>[0] = {
-        token: sessionStorage.getItem("token")!,
+        token: token,
     }
     socket.emit("draw_card", data)
 }
+
+
+
+
 
 document.getElementById("create_room_btn")?.addEventListener("click", () => {
     // when create room (submit) button pressed
@@ -77,6 +137,7 @@ document.getElementById("create_room_btn")?.addEventListener("click", () => {
         player_name: player_name
     })
     input.value = ""
+    window.history.replaceState({}, "", window.location.pathname)
 
 })
 
@@ -95,6 +156,7 @@ document.getElementById("join_room_btn")?.addEventListener("click", () => {
 
     name_input.value = ""
     code_input.value = ""
+    window.history.replaceState({}, "", window.location.pathname)
 
 })
 
@@ -118,12 +180,14 @@ document.getElementById("place_card_btn")?.addEventListener("click", () => {
     const index_input = (document.getElementById("place_card_index") as HTMLInputElement)
     const colour_choice = (document.getElementById("colour_choice") as HTMLSelectElement).value
 
-    if (colour_choice) {
-        placeCard(parseInt(index_input.value), colour_choice as Colour)
-    } else {
-        placeCard(parseInt(index_input.value))
-    }
+    const index = parseInt(index_input.value)
+    if (isNaN(index)) return
 
+    if (colour_choice) {
+        placeCard(index, colour_choice as Colour)
+    } else {
+        placeCard(index)
+    }
 
     index_input.value = ""
 
@@ -134,6 +198,9 @@ document.getElementById("draw_card_btn")?.addEventListener("click", () => {
     drawCard()
 
 })
+
+
+
 
 socket.on("room_status", (data) => {
     if (data.game_state === "waiting") {
@@ -197,10 +264,8 @@ socket.on("game_status", (data) => {
             card_element.innerHTML = `${i}: ${JSON.stringify(card)}`
             document.getElementById("hand")?.appendChild(card_element)
         }
-        show("game_view")
-    } else if (data.gameState === "finished" && data.winner) {
-        document.getElementById("winner")!.innerHTML = data.winner
+        if (sessionStorage.getItem("page") !== "game_view") {
+            show("game_view")
+        }
     }
-
-    
 })

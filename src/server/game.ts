@@ -1,5 +1,5 @@
 import { type Card, type Colour } from "../types/game.js"
-import { type  Player } from "../server/player.js"
+import { type Player } from "../server/player.js"
 import { createDeck, shuffle } from "./deck.js"
 
 export class Game {
@@ -77,27 +77,27 @@ export class Game {
 
     placeCard(player_id: string, hand_index: number, chosen_colour?: Colour) {
         if (this.state !== "playing") {
-            return {type: "error", message: "Game not active"}
+            return { type: "error", message: "Game not active" }
         }
 
         const player = this.players.find(x => x.id === player_id)
 
         if (player === undefined) {
-            return {type: "error", message: "Player not found"}
+            return { type: "error", message: "Player not found" }
         }
-        
+
         if (this.players[this.currentPlayerIndex]?.id !== player_id) {
-            return {type: "error", message: "Not turn"}
+            return { type: "error", message: "Not turn" }
         }
 
         if (hand_index < 0 || hand_index >= player.hand.length) {
-            return {type: "error", message: "Hand index out of bounds"}
+            return { type: "error", message: "Hand index out of bounds" }
         }
 
         const card = player.hand[hand_index]!
 
         if (!(this.isCardValid(card))) {
-            return {type: "error", message: "Card not valid"}
+            return { type: "error", message: "Card not valid" }
         }
 
         // move card to discard pile
@@ -106,7 +106,7 @@ export class Game {
 
         if (player.hand.length === 0) {
             this.endGame(player)
-            return {type: "success", data: player.hand}
+            return { type: "success", data: player.hand }
         }
 
         const effect_response = this.useEffect(card, chosen_colour)
@@ -122,7 +122,7 @@ export class Game {
             this.currentPlayerIndex = this.getNextPlayer()
         }
 
-        return {type: "success", data: player.hand}
+        return { type: "success", data: player.hand }
     }
 
     useEffect(card: Card, chosen_colour?: Colour) {
@@ -147,7 +147,7 @@ export class Game {
             if (chosen_colour) {
                 this.colour_effect = chosen_colour
             } else {
-                return {type: "error", message: "No colour specified"}
+                return { type: "error", message: "No colour specified" }
             }
         } else {
             this.colour_effect = null
@@ -172,17 +172,17 @@ export class Game {
 
     drawForPlayer(player_id: string) {
         if (this.state !== "playing") {
-            return {type: "error", message: "Game not active"}
+            return { type: "error", message: "Game not active" }
         }
 
         const player = this.players.find(x => x.id === player_id)
 
         if (player === undefined) {
-            return {type: "error", message: "Player not found"}
+            return { type: "error", message: "Player not found" }
         }
 
         if (this.players[this.currentPlayerIndex] !== player) {
-            return {type: "error", message: "Not your turn"}
+            return { type: "error", message: "Not your turn" }
         }
 
         player.hand.push(this.drawCard())
