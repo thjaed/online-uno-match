@@ -1,5 +1,6 @@
 import type { Game } from "../server/game.js"
 import type { Colour } from "./game.js"
+import type { User } from "./player.js"
 import type { PublicUsers } from "./server.js"
 
 export interface ClientToServerEvents {
@@ -15,11 +16,12 @@ export interface ServerToClientEvents {
     error: (data: { message: string }) => void
     reconnect_error: () => void
     reconnect_success: () => void
-    auth: (data: { token: string }) => void
+    auth: (data: { user: User }) => void
     room_status: (data: {
         room_code: string,
         public_users: PublicUsers[],
         game_state: Game["state"]
     }) => void
     game_status: (data: any) => void
+    game_end: (data: any) => void
 }

@@ -199,6 +199,12 @@ document.getElementById("draw_card_btn")?.addEventListener("click", () => {
 
 })
 
+document.getElementById("back_to_lobby_btn")?.addEventListener("click", () => {
+    // when back to lobby button pressed
+    show("lobby_view")
+
+})
+
 
 
 
@@ -213,8 +219,6 @@ socket.on("room_status", (data) => {
         document.getElementById("user_list")!.innerHTML = ''
 
         for (const user of data.public_users) {
-            sessionStorage.setItem(user.id, user.name)
-
             const user_element = document.createElement("p")
             user_element.innerHTML = user.name
             document.getElementById("user_list")?.appendChild(user_element)
@@ -227,7 +231,9 @@ socket.on("error", (data) => {
 })
 
 socket.on("auth", (data) => {
-    sessionStorage.setItem("token", data.token)
+    sessionStorage.setItem("token", data.user.token)
+    sessionStorage.setItem("name", data.user.name)
+    sessionStorage.setItem("id", data.user.id)
 })
 
 socket.on("game_status", (data) => {
@@ -238,7 +244,8 @@ socket.on("game_status", (data) => {
         for (const player of data.players) {
             if (player.id === data.currentPlayerId) {
                 curr_hand_size = player.handSize
-                curr_name = sessionStorage.getItem(player.id)
+                curr_name = player.name
+                break
             }
         }
         document.getElementById("current_player")!.innerHTML = `${curr_name}'s turn (${curr_hand_size})`
@@ -268,4 +275,15 @@ socket.on("game_status", (data) => {
             show("game_view")
         }
     }
+})
+
+socket.on("game_end", (data) => {
+    let text
+    if (data.winner_id === sessionStorage.getItem("id")) {
+        text = `You won!`
+    } else {
+        text = `${data.winner_name} won!`
+    }
+    document.getElementById("winner")!.innerHTML = text
+    show("end_game_view")
 })

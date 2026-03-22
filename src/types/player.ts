@@ -1,7 +1,8 @@
-import { type Card } from "../types/game.js"
+import { type Card } from "./game.js"
 
 export type Player = {
     id: string
+    name: string
     hand: Card[]
 }
 

@@ -1,10 +1,10 @@
 import * as express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import { createRoom, getRoom, removeUser, randomRoomCode, getPublicRoomStatus, getIdFromToken, getRoomFromUser } from "./roomManager.js";
+import { createRoom, getRoom, removeUser, randomRoomCode, getPublicRoomStatus, getIdFromToken, getRoomFromUser, Room, resetRoom } from "./roomManager.js";
 import { type ClientToServerEvents, type ServerToClientEvents } from "../types/events.js"
 import { randomUUID } from "crypto";
-import type { User } from "./player.js";
+import type { User } from "../types/player.js";
 
 const app = express.default();
 const httpServer = createServer(app);
@@ -58,7 +58,7 @@ function disconnectUser(socket_id: string) {
         if (remove && remove.deleted && remove.users_left) {
             // if there are still users in the room, tell them that the user has left
             const room = remove.room!
-            io.to(room.code).emit("room_status", getPublicRoomStatus(room.code)!)
+            updateRoom(room)
         }
         expiringUsersMap.delete(user_id)
         UserSocketIdMap.delete(user_id)
@@ -66,9 +66,27 @@ function disconnectUser(socket_id: string) {
     socketUserIdMap.delete(socket_id)
 }
 
-io.on("connection", (socket) => {
-    console.log(`${socket.id} connected`)
+function updateRoom(room: Room) {
+    // room status
+    io.to(room.code).emit("room_status", getPublicRoomStatus(room.code)!)
 
+    if (room.game.state === "playing") {
+        // game state
+        for (const user of room.users) {
+            const socket_id = UserSocketIdMap.get(user.id)
+            if (!socket_id) continue
+
+            io.to(socket_id).emit("game_status", room.game.getPublicState(user.id))
+        }
+    } else if (room.game.state === "finished") {
+        if (room.game.winner) {
+            io.to(room.code).emit("game_end", { "winner_name": room.game.winner.name,  "winner_id": room.game.winner.id })
+            resetRoom(room.code)
+        }
+    }
+}
+
+io.on("connection", (socket) => {
     socket.on("reconnect", (data) => {
         const user_id = auth(data.token, socket.id)
         if (user_id) {
@@ -83,10 +101,7 @@ io.on("connection", (socket) => {
             if (room) {
                 // send data
                 socket.join(room.code)
-                io.to(room.code).emit("room_status", getPublicRoomStatus(room.code)!)
-                if (room.game.state !== "waiting") {
-                    socket.emit("game_status", room.game.getPublicState(user_id))
-                }
+                updateRoom(room)
                 socket.emit("reconnect_success")
             }
         } else {
@@ -98,7 +113,7 @@ io.on("connection", (socket) => {
         const player_name = data.player_name
         const user = newUser(player_name)
         if (user) {
-            socket.emit("auth", ({ token: user.token }))
+            socket.emit("auth", ({ user: user }))
             updateSocket(socket.id, user.id)
 
             const room_code = randomRoomCode()
@@ -106,11 +121,9 @@ io.on("connection", (socket) => {
                 user: user,
                 room_code: room_code
             }
-            createRoom(server_data)
+            const room = createRoom(server_data)
             socket.join(room_code)
-
-            console.log(`user ${user.name} with id ${user.id} created room ${room_code}`)
-            io.to((room_code)).emit("room_status", getPublicRoomStatus(room_code)!)
+            updateRoom(room)
 
         } else {
             socket.emit("error", { message: "Invalid input" })
@@ -120,48 +133,67 @@ io.on("connection", (socket) => {
     socket.on("join_room", (data) => {
         const player_name = data.player_name
         const user = newUser(player_name)
-        if (user &&
+
+        if (!(user &&
             typeof data.room_code == "string" &&
             data.room_code.length === 6
-        ) {
-            const room = getRoom(data.room_code)
-            if (room) {
-                socket.emit("auth", ({ token: user.token }))
-                updateSocket(socket.id, user.id)
-
-                room.addUser(user)
-                socket.join(room.code)
-                io.to((room.code)).emit("room_status", getPublicRoomStatus(room.code)!)
-                console.log(`user ${user.name} with id ${user.id} joined room ${room.code}`)
-
-            } else {
-                socket.emit("error", { message: "Room not found" })
-            }
-
-        } else {
+        )) {
             socket.emit("error", { message: "Invalid input" })
+            return
         }
+
+        const room = getRoom(data.room_code)
+
+        if (!room) {
+            socket.emit("error", { message: "Room not found" })
+            return
+        }
+
+        if (room.game.state !== "waiting") {
+            socket.emit("error", { message: "Game already started" })
+            return
+        }
+
+        if (room.users.length + 1 > 10) {
+            socket.emit("error", { message: "Too many players" })
+            return
+        }
+
+        for (const u of room.users) {
+            if (u.name === player_name) {
+                socket.emit("error", { message: "Name already exists" })
+                return
+            }
+        }
+            
+        socket.emit("auth", ({ user: user }))
+        updateSocket(socket.id, user.id)
+        room.addUser(user)
+        socket.join(room.code)
+        updateRoom(room)
     })
 
     socket.on("start_game", (data) => {
         const user_id = auth(data.token, socket.id)
-        if (user_id) {
-            const room = getRoomFromUser(user_id)
-
-            if (room) {
-                room.game.startGame()
-                console.log(`started game ${room.code}`)
-
-                for (const user of room.users) {
-                    const socket_id = UserSocketIdMap.get(user.id)
-                    if (!socket_id) continue
-
-                    io.to(socket_id).emit("game_status", room.game.getPublicState(user.id))
-                }
-            }
-        } else {
+        if (!user_id) {
             socket.emit("error", { message: "Invalid input" })
+            return
         }
+
+        const room = getRoomFromUser(user_id)
+
+        if (!room) {
+             socket.emit("error", { message: "Invalid input" })
+            return
+        }
+
+        const u_count = room.users.length
+        if (u_count <= 1 || 10 < u_count) {
+            socket.emit("error", { message: "Must have 2 to 10 players" })
+        }
+
+        room.game.startGame()
+        updateRoom(room)
     })
 
     socket.on("place_card", (data) => {
@@ -182,12 +214,7 @@ io.on("connection", (socket) => {
                 if (response.type == "error") {
                     socket.emit("error", { message: response.message! })
                 } else {
-                    for (const user of room.users) {
-                        const socket_id = UserSocketIdMap.get(user.id)
-                        if (!socket_id) return
-
-                        io.to(socket_id).emit("game_status", room.game.getPublicState(user.id))
-                    }
+                    updateRoom(room)
                 }
 
             }
@@ -204,12 +231,7 @@ io.on("connection", (socket) => {
                 if (response.type == "error") {
                     socket.emit("error", { message: response.message! })
                 } else {
-                    for (const user of room.users) {
-                        const socket_id = UserSocketIdMap.get(user.id)
-                        if (!socket_id) return
-
-                        io.to(socket_id).emit("game_status", room.game.getPublicState(user.id))
-                    }
+                    updateRoom(room)
                 }
 
             }

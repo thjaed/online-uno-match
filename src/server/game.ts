@@ -1,5 +1,5 @@
 import { type Card, type Colour } from "../types/game.js"
-import { type Player } from "../server/player.js"
+import { type Player } from "../types/player.js"
 import { createDeck, shuffle } from "./deck.js"
 
 export class Game {
@@ -29,13 +29,13 @@ export class Game {
 
     startGame() {
         if (this.state !== "waiting") {
-            throw new Error("Game already started")
+            return { type: "error", message: "Game already started" }
         }
 
         this.state = "playing"
         this.deck = createDeck()
         for (let player of this.players) {
-            for (let i = 0; i < 7; i++) {
+            for (let i = 0; i < 1; i++) {
                 player.hand.push(this.drawCard())
             }
         }
@@ -196,7 +196,7 @@ export class Game {
         const viewer = this.players.find(x => x.id === viewer_id)!
 
         if (!viewer) {
-            throw new Error("Viewer not found")
+            return { type: "error", message: "User not found" }
         }
 
         // get info for other players
@@ -204,11 +204,12 @@ export class Game {
         for (let i = 0; i < this.players.length; i++) {
             const player = this.players[i]!
 
-            const id = player.id
-            const hand_size = player.hand.length
-            const index = i
-
-            const public_player = { "id": id, "handSize": hand_size, "index": index }
+            const public_player = {
+                "id": player.id,
+                "name": player.name,
+                "handSize": player.hand.length,
+                "index": i 
+            }
             players_public.push(public_player)
         }
 
@@ -218,13 +219,19 @@ export class Game {
             "yourHand": viewer.hand,
             "yourIndex": this.players.indexOf(viewer),
             "topCard": this.getTopCard(),
-            "currentPlayerId": this.players[this.currentPlayerIndex]!.id,
-            "deckSize": this.deck.length,
-            "discardSize": this.discard.length,
+            "currentPlayerId": this.players[this.currentPlayerIndex]!.id, // this sometimes breaks if a player leaves
             "direction": this.direction,
-            "winnerId": this.winner?.id ?? null,
             "colourEffect": this.colour_effect
         }
+    }
 
+    getEndState() {
+        if (this.state === "finished" && this.winner !== null) {
+            return {
+                "winner": this.winner.id
+            }
+        } else {
+            return { type: "error", message: "Game not finished"}
+        }
     }
 }

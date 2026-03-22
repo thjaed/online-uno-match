@@ -1,7 +1,7 @@
 import type { ServerToClientEvents } from "../types/events.js"
 import type { PublicUsers, ServerCreateRoomData } from "../types/server.js"
 import { Game } from "./game.js"
-import type { Player, User } from "./player.js"
+import type { Player, User } from "../types/player.js"
 
 let rooms: Room[] = []
 
@@ -17,7 +17,7 @@ export class Room {
     }
 
     addUser(user: User) {
-        const player: Player = { id: user.id, hand: [] }
+        const player: Player = { id: user.id, hand: [], name: user.name }
 
         this.users.push(user)
         this.game.players.push(player)
@@ -120,13 +120,21 @@ export function createRoom(data: ServerCreateRoomData) {
     }
 
     const user_id = data.user.id
-    const player: Player = { id: user_id, hand: [] }
+    const player: Player = { id: user_id, hand: [], name: data.user.name }
     const user: User = { id: user_id, token: data.user.token, name: data.user.name }
     const game = new Game([player])
     const room = new Room(room_code, game, [user])
     rooms.push(room)
 
     return room
+}
+
+export function resetRoom(room_code: string) {
+    let room = getRoom(room_code)
+    if (room) {
+        const game = new Game(room.game.players)
+        room.game = game
+    }
 }
 
 export function deleteRoom(code: string) {

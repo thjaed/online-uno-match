@@ -1,4 +1,4 @@
-import type { User } from "../server/player.js"
+import type { User } from "./player.js"
 
 export type ServerCreateRoomData = {
     user: User
