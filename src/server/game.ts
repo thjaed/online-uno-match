@@ -35,7 +35,7 @@ export class Game {
         this.state = "playing"
         this.deck = createDeck()
         for (let player of this.players) {
-            for (let i = 0; i < 1; i++) {
+            for (let i = 0; i < 7; i++) {
                 player.hand.push(this.drawCard())
             }
         }

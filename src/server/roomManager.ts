@@ -132,7 +132,12 @@ export function createRoom(data: ServerCreateRoomData) {
 export function resetRoom(room_code: string) {
     let room = getRoom(room_code)
     if (room) {
-        const game = new Game(room.game.players)
+        let players: Player[] = []
+        for (const p of room.game.players) {
+            let player: Player = {id: p.id, name: p.name, hand: []}
+            players.push(player)
+        }
+        const game = new Game(players)
         room.game = game
     }
 }
