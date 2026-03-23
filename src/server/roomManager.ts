@@ -1,5 +1,5 @@
 import type { ServerToClientEvents } from "../types/events.js"
-import type { PublicUsers, ServerCreateRoomData } from "../types/server.js"
+import type { PublicPlayers, ServerCreateRoomData } from "../types/server.js"
 import { Game } from "./game.js"
 import type { Player, User } from "../types/player.js"
 
@@ -16,11 +16,15 @@ export class Room {
         users ? this.users = users : this.users = []
     }
 
-    addUser(user: User) {
-        const player: Player = { id: user.id, hand: [], name: user.name }
+    addPlayer(user: User, type: Player["type"]) {
+        const player: Player = { id: user.id, hand: [], name: user.name, type: type }
 
         this.users.push(user)
         this.game.players.push(player)
+    }
+
+    addBot(bot: Player) {
+        this.game.players.push(bot)
     }
 
     removeUser(id: string) {
@@ -95,16 +99,17 @@ export function getPublicRoomStatus(room_code: string) {
     const room = getRoom(room_code)
 
     if (room) {
-        let users: PublicUsers[] = []
-        for (const u of room.users) {
-            users.push({
-                name: u.name,
-                id: u.id
+        let players: PublicPlayers[] = []
+        for (const p of room.game.players) {
+            players.push({
+                name: p.name,
+                id: p.id,
+                type: p.type
             })
         }
             const data: Parameters<ServerToClientEvents["room_status"]>[0] = {
                 room_code: room.code,
-                public_users: users,
+                public_players: players,
                 game_state: room.game.state
             }
 
@@ -120,7 +125,7 @@ export function createRoom(data: ServerCreateRoomData) {
     }
 
     const user_id = data.user.id
-    const player: Player = { id: user_id, hand: [], name: data.user.name }
+    const player: Player = { id: user_id, hand: [], name: data.user.name, type: "human" }
     const user: User = { id: user_id, token: data.user.token, name: data.user.name }
     const game = new Game([player])
     const room = new Room(room_code, game, [user])
@@ -134,7 +139,7 @@ export function resetRoom(room_code: string) {
     if (room) {
         let players: Player[] = []
         for (const p of room.game.players) {
-            let player: Player = {id: p.id, name: p.name, hand: []}
+            let player: Player = {id: p.id, name: p.name, hand: [], type: p.type}
             players.push(player)
         }
         const game = new Game(players)

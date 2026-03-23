@@ -4,7 +4,7 @@ import { Server } from "socket.io";
 import { createRoom, getRoom, removeUser, randomRoomCode, getPublicRoomStatus, getIdFromToken, getRoomFromUser, Room, resetRoom } from "./roomManager.js";
 import { type ClientToServerEvents, type ServerToClientEvents } from "../types/events.js"
 import { randomUUID } from "crypto";
-import type { User } from "../types/player.js";
+import type { Player, User } from "../types/player.js";
 
 const app = express.default();
 const httpServer = createServer(app);
@@ -80,7 +80,7 @@ function updateRoom(room: Room) {
         }
     } else if (room.game.state === "finished") {
         if (room.game.winner) {
-            io.to(room.code).emit("game_end", { "winner_name": room.game.winner.name,  "winner_id": room.game.winner.id })
+            io.to(room.code).emit("game_end", { "winner_name": room.game.winner.name, "winner_id": room.game.winner.id })
             resetRoom(room.code)
         }
     }
@@ -154,22 +154,72 @@ io.on("connection", (socket) => {
             return
         }
 
-        if (room.users.length + 1 > 10) {
+        if (room.game.players.length + 1 > 10) {
             socket.emit("error", { message: "Too many players" })
             return
         }
 
-        for (const u of room.users) {
+        for (const u of room.game.players) {
             if (u.name === player_name) {
                 socket.emit("error", { message: "Name already exists" })
                 return
             }
         }
-            
+
         socket.emit("auth", ({ user: user }))
         updateSocket(socket.id, user.id)
-        room.addUser(user)
+        room.addPlayer(user, "human")
         socket.join(room.code)
+        updateRoom(room)
+    })
+
+    socket.on("add_bot", (data) => {
+        const user_id = auth(data.token, socket.id)
+        if (!user_id) {
+            socket.emit("error", { message: "Invalid input" })
+            return
+        }
+
+        const room = getRoomFromUser(user_id)
+
+        if (!room) {
+            socket.emit("error", { message: "Room not found" })
+            return
+        }
+
+        if (room.game.state !== "waiting") {
+            socket.emit("error", { message: "Game already started" })
+            return
+        }
+
+        if (room.game.players.length + 1 > 10) {
+            socket.emit("error", { message: "Too many players" })
+            return
+        }
+
+        let name
+        if (data.name) {
+            if (!(typeof data.name === "string" &&
+                data.name.length < 20 &&
+                data.name.length >= 3
+            )) {
+                socket.emit("error", { message: "Invalid input" })
+            }
+
+            for (const u of room.game.players) {
+                if (u.name === data.name) {
+                    socket.emit("error", { message: "Name already exists" })
+                    return
+                }
+            }
+
+            name = data.name
+
+        } else {
+            name = `bot ${randomRoomCode()}` // temp
+        }
+        const bot: Player = { id: randomUUID(), name: name, hand: [], type: "bot" }
+        room.addBot(bot)
         updateRoom(room)
     })
 
@@ -183,11 +233,11 @@ io.on("connection", (socket) => {
         const room = getRoomFromUser(user_id)
 
         if (!room) {
-             socket.emit("error", { message: "Invalid input" })
+            socket.emit("error", { message: "Invalid input" })
             return
         }
 
-        const u_count = room.users.length
+        const u_count = room.game.players.length
         if (u_count <= 1 || 10 < u_count) {
             socket.emit("error", { message: "Must have 2 to 10 players" })
         }

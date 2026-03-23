@@ -86,6 +86,18 @@ function joinRoom(data: Parameters<ClientToServerEvents["join_room"]>[0]) {
     socket.emit("join_room", data)
 }
 
+function addBot() {
+    const token = sessionStorage.getItem("token")
+    if (!token) {
+        return false
+    }
+
+    const data: Parameters<ClientToServerEvents["add_bot"]>[0] = {
+        token: token,
+    }
+    socket.emit("add_bot", data)
+}
+
 function startGame() {
     const token = sessionStorage.getItem("token")
     if (!token) {
@@ -170,6 +182,11 @@ document.getElementById("join_room_page_btn")?.addEventListener("click", () => {
     show("join_room_view")
 })
 
+document.getElementById("add_bot_btn")?.addEventListener("click", () => {
+    // when add bot button pressed
+    addBot()
+})
+
 document.getElementById("start_game_btn")?.addEventListener("click", () => {
     // when start game button pressed
     startGame()
@@ -218,10 +235,15 @@ socket.on("room_status", (data) => {
         // update player list
         document.getElementById("user_list")!.innerHTML = ''
 
-        for (const user of data.public_users) {
-            const user_element = document.createElement("p")
-            user_element.innerHTML = user.name
-            document.getElementById("user_list")?.appendChild(user_element)
+        for (const p of data.public_players) {
+            const el = document.createElement("p")
+            if (p.type === "bot") {
+                el.innerHTML = `${p.name} (Bot)`
+            } else {
+                el.innerHTML = p.name
+            }
+            
+            document.getElementById("user_list")?.appendChild(el)
         }
     }
 })

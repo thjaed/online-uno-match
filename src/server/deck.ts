@@ -1,4 +1,4 @@
-import { type Card, type NumberCard, type Colour, type NumberValue, type ActionValue, type WildValue } from "../types/game.js"
+import { type Card, type Colour, type NumberValue, type ActionValue, type WildValue } from "../types/game.js"
 
 export function shuffle(deck: Card[]): Card[] {
     for (let i = deck.length - 1; i > 0; i--) {
