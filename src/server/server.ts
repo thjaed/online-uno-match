@@ -1,8 +1,8 @@
 import * as express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import { createRoom, getRoom, removeUser, randomRoomCode, getPublicRoomStatus, getIdFromToken, getRoomFromUser, Room, resetRoom } from "./roomManager.js";
-import { type ClientToServerEvents, type ServerToClientEvents } from "../types/events.js"
+import { createRoom, getRoom, removeUser, randomRoomCode, getPublicRoomStatus, getIdFromToken, getRoomFromUser, Room, resetRoom, getPublicPlayer, getUserbyId, getPublicUser } from "./roomManager.js";
+import { type ClientToServerEvents, type game_event, type ServerToClientEvents } from "../types/events.js"
 import { randomUUID } from "crypto";
 import type { Player, User } from "../types/player.js";
 
@@ -54,11 +54,12 @@ function newUser(player_name: string) {
 function disconnectUser(socket_id: string) {
     const user_id = socketUserIdMap.get(socket_id)
     if (user_id) {
+        const user = getUserbyId(user_id)!
         const remove = removeUser(user_id)
         if (remove && remove.deleted && remove.users_left) {
             // if there are still users in the room, tell them that the user has left
             const room = remove.room!
-            updateRoom(room)
+            updateRoom(room.code, "player_leave_event", { player: getPublicUser(user)})
         }
         expiringUsersMap.delete(user_id)
         UserSocketIdMap.delete(user_id)
@@ -66,8 +67,16 @@ function disconnectUser(socket_id: string) {
     socketUserIdMap.delete(socket_id)
 }
 
-function updateRoom(room: Room) {
+export function updateRoom(room_code: string, type: game_event, data: any) {
     // room status
+    const room = getRoom(room_code)
+
+    if (!room) {
+        return  
+    }
+
+    io.to(room_code).emit(type, data)
+
     io.to(room.code).emit("room_status", getPublicRoomStatus(room.code)!)
 
     if (room.game.state === "playing") {
@@ -77,11 +86,6 @@ function updateRoom(room: Room) {
             if (!socket_id) continue
 
             io.to(socket_id).emit("game_status", room.game.getPublicState(user.id))
-        }
-    } else if (room.game.state === "finished") {
-        if (room.game.winner) {
-            io.to(room.code).emit("game_end", { "winner_name": room.game.winner.name, "winner_id": room.game.winner.id })
-            resetRoom(room.code)
         }
     }
 }
@@ -101,7 +105,8 @@ io.on("connection", (socket) => {
             if (room) {
                 // send data
                 socket.join(room.code)
-                updateRoom(room)
+                const user = getUserbyId(user_id)!
+                updateRoom(room.code, "player_join_event", { player: getPublicUser(user)})
                 socket.emit("reconnect_success")
             }
         } else {
@@ -123,7 +128,7 @@ io.on("connection", (socket) => {
             }
             const room = createRoom(server_data)
             socket.join(room_code)
-            updateRoom(room)
+            updateRoom(room.code, "create_room_event", { code: room.code })
 
         } else {
             socket.emit("error", { message: "Invalid input" })
@@ -168,9 +173,9 @@ io.on("connection", (socket) => {
 
         socket.emit("auth", ({ user: user }))
         updateSocket(socket.id, user.id)
-        room.addPlayer(user, "human")
+        const player = room.addPlayer(user, "human")
         socket.join(room.code)
-        updateRoom(room)
+        updateRoom(room.code, "player_join_event", { player: getPublicPlayer(player)})
     })
 
     socket.on("add_bot", (data) => {
@@ -220,7 +225,7 @@ io.on("connection", (socket) => {
         }
         const bot: Player = { id: randomUUID(), name: name, hand: [], type: "bot" }
         room.addBot(bot)
-        updateRoom(room)
+        updateRoom(room.code, "player_join_event", { player: getPublicPlayer(bot)})
     })
 
     socket.on("start_game", (data) => {
@@ -243,7 +248,7 @@ io.on("connection", (socket) => {
         }
 
         room.game.startGame()
-        updateRoom(room)
+        updateRoom(room.code, "game_start_event", {})
     })
 
     socket.on("place_card", (data) => {
@@ -263,10 +268,7 @@ io.on("connection", (socket) => {
                 }
                 if (response.type == "error") {
                     socket.emit("error", { message: response.message! })
-                } else {
-                    updateRoom(room)
                 }
-
             }
         }
     })
@@ -280,10 +282,7 @@ io.on("connection", (socket) => {
                 const response = room.game.drawForPlayer(user_id)
                 if (response.type == "error") {
                     socket.emit("error", { message: response.message! })
-                } else {
-                    updateRoom(room)
                 }
-
             }
         }
 

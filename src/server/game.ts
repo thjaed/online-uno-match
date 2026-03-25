@@ -1,9 +1,12 @@
-import { json } from "stream/consumers"
 import { type Card, type Colour } from "../types/game.js"
 import { type Player } from "../types/player.js"
+import type { PublicPlayer } from "../types/player.js"
+import { getPublicPlayer } from "./roomManager.js"
 import { createDeck, shuffle } from "./deck.js"
+import { update } from "./gameUpdateManager.js"
 
 export class Game {
+    room_code: string
     players: Player[]
     deck: Card[]
     discard: Card[]
@@ -13,8 +16,9 @@ export class Game {
     state: "waiting" | "playing" | "finished"
     winner: Player | null
 
-    constructor(players?: Player[]) {
-        players ? this.players = players : this.players = []
+    constructor(players: Player[], room_code: string) {
+        this.room_code = room_code
+        this.players = players
         this.deck = []
         this.discard = []
         this.currentPlayerIndex = 0
@@ -148,6 +152,7 @@ export class Game {
 
         if (player.hand.length === 0) {
             this.endGame(player)
+            update("place_card_event", this.room_code, { player: getPublicPlayer(player), card: card })
             return { type: "success", data: player.hand }
         }
 
@@ -158,7 +163,7 @@ export class Game {
         }
 
         this.nextPlayer(card.value === "skip")
-
+        update("place_card_event", this.room_code, { player: getPublicPlayer(player), card: card })
         return { type: "success", data: player.hand }
     }
 
@@ -196,6 +201,7 @@ export class Game {
     endGame(player: Player) {
         this.state = "finished"
         this.winner = player
+        update("game_end_event", this.room_code, { winner: player })
     }
 
     drawCard() {
@@ -222,9 +228,12 @@ export class Game {
             return { type: "error", message: "Not your turn" }
         }
 
-        player.hand.push(this.drawCard())
+        const card = this.drawCard()
+        player.hand.push(card)
 
         this.nextPlayer(false)
+
+        update("draw_card_event", this.room_code, { player: getPublicPlayer(player), card: card })
 
         return { type: "success" }
     }
@@ -237,15 +246,16 @@ export class Game {
         }
 
         // get info for other players
-        let players_public = []
+        let players_public: PublicPlayer[] = []
         for (let i = 0; i < this.players.length; i++) {
             const player = this.players[i]!
 
             const public_player = {
                 "id": player.id,
                 "name": player.name,
-                "handSize": player.hand.length,
-                "index": i
+                "hand_size": player.hand.length,
+                "index": i,
+                "type": player.type
             }
             players_public.push(public_player)
         }

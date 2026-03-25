@@ -265,7 +265,7 @@ socket.on("game_status", (data) => {
         let curr_hand_size
         for (const player of data.players) {
             if (player.id === data.currentPlayerId) {
-                curr_hand_size = player.handSize
+                curr_hand_size = player.hand_size
                 curr_name = player.name
                 break
             }
@@ -299,12 +299,12 @@ socket.on("game_status", (data) => {
     }
 })
 
-socket.on("game_end", (data) => {
+socket.on("game_end_event", (data) => {
     let text
-    if (data.winner_id === sessionStorage.getItem("id")) {
+    if (data.winner.id === sessionStorage.getItem("id")) {
         text = `You won!`
     } else {
-        text = `${data.winner_name} won!`
+        text = `${data.winner.name} won!`
     }
     document.getElementById("winner")!.innerHTML = text
     show("end_game_view")

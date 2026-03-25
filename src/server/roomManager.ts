@@ -1,5 +1,6 @@
 import type { ServerToClientEvents } from "../types/events.js"
-import type { PublicPlayers, ServerCreateRoomData } from "../types/server.js"
+import type { ServerCreateRoomData } from "../types/server.js"
+import type { PublicPlayer, PublicUser } from "../types/player.js"
 import { Game } from "./game.js"
 import type { Player, User } from "../types/player.js"
 
@@ -21,6 +22,8 @@ export class Room {
 
         this.users.push(user)
         this.game.players.push(player)
+
+        return player
     }
 
     addBot(bot: Player) {
@@ -95,11 +98,21 @@ export function getRoom(code: string) {
     return (rooms.find(r => r.code === code))
 }
 
+export function getUserbyId(id: string): User | undefined {
+    for (const r of rooms) {
+        const user = r.users.find(u => u.id === id)
+        if (user) {
+            return user
+        }
+    }
+    return undefined
+}
+
 export function getPublicRoomStatus(room_code: string) {
     const room = getRoom(room_code)
 
     if (room) {
-        let players: PublicPlayers[] = []
+        let players: PublicPlayer[] = []
         for (const p of room.game.players) {
             players.push({
                 name: p.name,
@@ -107,13 +120,13 @@ export function getPublicRoomStatus(room_code: string) {
                 type: p.type
             })
         }
-            const data: Parameters<ServerToClientEvents["room_status"]>[0] = {
-                room_code: room.code,
-                public_players: players,
-                game_state: room.game.state
-            }
+        const data: Parameters<ServerToClientEvents["room_status"]>[0] = {
+            room_code: room.code,
+            public_players: players,
+            game_state: room.game.state
+        }
 
-            return data
+        return data
     }
 }
 
@@ -127,7 +140,7 @@ export function createRoom(data: ServerCreateRoomData) {
     const user_id = data.user.id
     const player: Player = { id: user_id, hand: [], name: data.user.name, type: "human" }
     const user: User = { id: user_id, token: data.user.token, name: data.user.name }
-    const game = new Game([player])
+    const game = new Game([player], room_code)
     const room = new Room(room_code, game, [user])
     rooms.push(room)
 
@@ -139,10 +152,10 @@ export function resetRoom(room_code: string) {
     if (room) {
         let players: Player[] = []
         for (const p of room.game.players) {
-            let player: Player = {id: p.id, name: p.name, hand: [], type: p.type}
+            let player: Player = { id: p.id, name: p.name, hand: [], type: p.type }
             players.push(player)
         }
-        const game = new Game(players)
+        const game = new Game(players, room.code)
         room.game = game
     }
 }
@@ -163,4 +176,20 @@ export function randomRoomCode() {
     } while (getRoom(code))
 
     return code
+}
+
+export function getPublicPlayer(player: Player): PublicPlayer {
+        return {
+        "id": player.id,
+        "name": player.name,
+        "hand_size": player.hand.length,
+        "type": player.type
+    }   
+}
+
+export function getPublicUser(user: User): PublicUser {
+        return {
+        "id": user.id,
+        "name": user.name,
+    }
 }

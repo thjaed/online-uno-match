@@ -7,8 +7,20 @@ export type Player = {
     type: "human" | "bot"
 }
 
+export type PublicPlayer = {
+    id: string
+    name: string
+    hand_size?: number
+    type: Player["type"]
+}
+
 export type User = {
     id: string
     token: string
+    name: string
+}
+
+export type PublicUser = {
+    id: string
     name: string
 }

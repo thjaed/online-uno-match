@@ -1,7 +1,7 @@
 import type { Game } from "../server/game.js"
-import type { Colour } from "./game.js"
+import type { Card, Colour } from "./game.js"
 import type { User } from "./player.js"
-import type { PublicPlayers } from "./server.js"
+import type { PublicPlayer } from "./player.js"
 
 export interface ClientToServerEvents {
     reconnect: (data: { token: string }) => void
@@ -20,9 +20,25 @@ export interface ServerToClientEvents {
     auth: (data: { user: User }) => void
     room_status: (data: {
         room_code: string,
-        public_players: PublicPlayers[],
+        public_players: PublicPlayer[],
         game_state: Game["state"]
     }) => void
     game_status: (data: any) => void
-    game_end: (data: any) => void
+    create_room_event: (data: { code: string }) => void
+    place_card_event: (data: { player: PublicPlayer, card: Card }) => void
+    draw_card_event: (data: { player: PublicPlayer }) => void
+    game_start_event: (data: {}) => void
+    game_end_event: (data: { winner: PublicPlayer }) => void
+    player_join_event: (data: { player: PublicPlayer }) => void
+    player_leave_event: (data: { player: PublicPlayer }) => void
 }
+
+export type game_event = (
+    "create_room_event" |
+    "player_leave_event" |
+    "player_join_event" |
+    "place_card_event" |
+    "draw_card_event" |
+    "game_start_event" |
+    "game_end_event"
+)
