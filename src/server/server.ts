@@ -245,6 +245,7 @@ io.on("connection", (socket) => {
         const u_count = room.game.players.length
         if (u_count <= 1 || 10 < u_count) {
             socket.emit("error", { message: "Must have 2 to 10 players" })
+            return
         }
 
         room.game.startGame()

@@ -1,6 +1,6 @@
 import type { Socket } from "socket.io-client"
 import type { ClientToServerEvents, ServerToClientEvents } from "../types/events.js"
-import type { Colour } from "../types/game.js"
+import type { Card, Colour } from "../types/game.js"
 
 declare const io: () => Socket<ServerToClientEvents, ClientToServerEvents>
 
@@ -47,6 +47,16 @@ function show(viewId: string) {
 
     document.getElementById(viewId)!.style.display = "block"
     sessionStorage.setItem("page", viewId)
+}
+
+function getCardAsset(card: Card): string {
+    let asset_name
+    if (card.type === "number" || card.type == "action") {
+        asset_name = `assets/${card.colour}_${card.value}.svg`
+    } else {
+        asset_name = `assets/${card.value}.svg`
+    }
+    return asset_name
 }
 
 
@@ -110,11 +120,16 @@ function startGame() {
     socket.emit("start_game", data)
 }
 
-function placeCard(index: number, colour?: Colour) {
+function placeCard(index: number) {
     const token = sessionStorage.getItem("token")
     if (!token) {
         return false
     }
+
+    const colour_choice = (document.getElementById("colour_choice") as HTMLSelectElement).value
+
+    let colour
+    colour_choice ? colour = colour_choice as Colour : colour = undefined
 
     const data: Parameters<ClientToServerEvents["place_card"]>[0] = {
         token: token,
@@ -192,34 +207,15 @@ document.getElementById("start_game_btn")?.addEventListener("click", () => {
     startGame()
 })
 
-document.getElementById("place_card_btn")?.addEventListener("click", () => {
-    // when place card button pressed
-    const index_input = (document.getElementById("place_card_index") as HTMLInputElement)
-    const colour_choice = (document.getElementById("colour_choice") as HTMLSelectElement).value
-
-    const index = parseInt(index_input.value)
-    if (isNaN(index)) return
-
-    if (colour_choice) {
-        placeCard(index, colour_choice as Colour)
-    } else {
-        placeCard(index)
-    }
-
-    index_input.value = ""
-
-})
 
 document.getElementById("draw_card_btn")?.addEventListener("click", () => {
     // when draw card button pressed
     drawCard()
-
 })
 
 document.getElementById("back_to_lobby_btn")?.addEventListener("click", () => {
     // when back to lobby button pressed
     show("lobby_view")
-
 })
 
 
@@ -242,7 +238,7 @@ socket.on("room_status", (data) => {
             } else {
                 el.innerHTML = p.name
             }
-            
+
             document.getElementById("user_list")?.appendChild(el)
         }
     }
@@ -270,11 +266,18 @@ socket.on("game_status", (data) => {
                 break
             }
         }
-        document.getElementById("current_player")!.innerHTML = `${curr_name}'s turn (${curr_hand_size})`
+
+        if (data.currentPlayerId === sessionStorage.getItem("id")) {
+            document.getElementById("current_player")!.innerHTML = `Your Turn`
+        } else {
+            document.getElementById("current_player")!.innerHTML = `${curr_name}'s turn (${curr_hand_size})`
+        }
 
         // top card
-        const top_card = data.topCard
-        document.getElementById("top_card")!.innerHTML = `Top card: ${JSON.stringify(top_card)}`
+        const asset_name = getCardAsset(data.topCard)
+        const card_element = document.getElementById("top_card")! as HTMLImageElement
+        card_element.src = asset_name
+        card_element.height = 150
 
         // colour effect
         if (data.colourEffect) {
@@ -288,9 +291,17 @@ socket.on("game_status", (data) => {
 
 
         for (let i = 0; i < data.yourHand.length; i++) {
-            const card = data.yourHand[i]
-            const card_element = document.createElement("p")
-            card_element.innerHTML = `${i}: ${JSON.stringify(card)}`
+            const asset_name = getCardAsset(data.yourHand[i])
+
+            const card_element = document.createElement("img")
+            card_element.src = asset_name
+            card_element.height = 150
+            card_element.style.cursor = "pointer"
+
+            card_element.addEventListener("click", () => {
+                placeCard(i)
+            })
+
             document.getElementById("hand")?.appendChild(card_element)
         }
         if (sessionStorage.getItem("page") !== "game_view") {
