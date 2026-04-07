@@ -261,13 +261,11 @@ io.on("connection", (socket) => {
             const room = getRoomFromUser(user_id)
 
             if (room) {
-                let response
-                if (data.colour) {
-                    response = room.game.placeCard(user_id, data.hand_index, data.colour)
-                } else {
-                    response = room.game.placeCard(user_id, data.hand_index)
+                const response = room.game.placeCard(user_id, data.hand_index, data.colour)
+                if (response.success && response.won) {
+
                 }
-                if (response.type == "error") {
+                if (!response.success) {
                     socket.emit("error", { message: response.message! })
                 }
             }

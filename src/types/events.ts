@@ -28,7 +28,7 @@ export interface ServerToClientEvents {
     place_card_event: (data: { player: PublicPlayer, card: Card }) => void
     draw_card_event: (data: { player: PublicPlayer }) => void
     game_start_event: (data: {}) => void
-    game_end_event: (data: { winner: PublicPlayer }) => void
+    game_end_event: (data: { winner: PublicPlayer, card: Card }) => void
     player_join_event: (data: { player: PublicPlayer }) => void
     player_leave_event: (data: { player: PublicPlayer }) => void
 }

@@ -59,8 +59,8 @@ export class Game {
         return colours[Math.floor(Math.random() * (colours.length - 1))]!
     }
 
-    getNextPlayer(index?: number, increment: number = 1) {
-        index ??= this.currentPlayerIndex
+    getNextPlayer(increment: number = 1) {
+        const index = this.currentPlayerIndex
 
         const step = increment * this.direction
         const next = (index + step + this.players.length) % this.players.length
@@ -71,13 +71,12 @@ export class Game {
     nextPlayer(skip: boolean): void {
         if (skip) {
             // skip next player
-            this.currentPlayerIndex = this.getNextPlayer(this.getNextPlayer())
+            this.currentPlayerIndex = this.getNextPlayer(2)
         } else {
-            this.currentPlayerIndex = this.getNextPlayer()
+            this.currentPlayerIndex = this.getNextPlayer(1)
         }
 
         this.botPlay()
-
     }
 
     isCardValid(card: Card) {
@@ -121,29 +120,29 @@ export class Game {
         }
     }
 
-    placeCard(player_id: string, hand_index: number, chosen_colour?: Colour) {
+    placeCard(player_id: string, hand_index: number, chosen_colour?: Colour): { success: boolean, message: string, hand: Card[], won: boolean } {
         if (this.state !== "playing") {
-            return { type: "error", message: "Game not active" }
+            return { success: false, message: "Game not active", hand: [], won: false }
         }
 
         const player = this.players.find(x => x.id === player_id)
 
         if (player === undefined) {
-            return { type: "error", message: "Player not found" }
+            return { success: false, message: "Player not found", hand: [], won: false }
         }
 
         if (this.players[this.currentPlayerIndex]?.id !== player_id) {
-            return { type: "error", message: "Not turn" }
+            return { success: false, message: "Not turn", hand: [], won: false }
         }
 
         if (hand_index < 0 || hand_index >= player.hand.length) {
-            return { type: "error", message: "Hand index out of bounds" }
+            return { success: false, message: "Hand index out of bounds", hand: [], won: false }
         }
 
         const card = player.hand[hand_index]!
 
         if (!(this.isCardValid(card))) {
-            return { type: "error", message: "Card not valid" }
+            return { success: false, message: "Card not valid", hand: [], won: false }
         }
 
         // move card to discard pile
@@ -151,23 +150,34 @@ export class Game {
         this.discard.push(card)
 
         if (player.hand.length === 0) {
-            this.endGame(player)
-            update("place_card_event", this.room_code, { player: getPublicPlayer(player), card: card })
-            return { type: "success", data: player.hand }
+            this.endGame(player, card)
+            return { success: true, message: "", won: true, hand: player.hand }
         }
 
-        const effect_response = this.useEffect(card, chosen_colour)
+        const effect = this.useEffect(card, chosen_colour)
 
-        if (effect_response.type === "error") {
-            return effect_response
+        if (effect.action === "skipped") {
+            this.nextPlayer(true)
+        } else {
+            this.nextPlayer(false)
         }
 
-        this.nextPlayer(card.value === "skip")
         update("place_card_event", this.room_code, { player: getPublicPlayer(player), card: card })
-        return { type: "success", data: player.hand }
+        return { success: true, message: "", won: false, hand: player.hand }
     }
 
-    useEffect(card: Card, chosen_colour?: Colour) {
+    useEffect(card: Card, chosen_colour?: Colour): { action: "drew" | "skipped" | null, colour_change: boolean } {
+        // wild colour
+        if (card.type === "wild" && chosen_colour) {
+            this.colour_effect = chosen_colour
+            if (card.value === "wild") {
+                return { action: null, colour_change: true }
+            }
+        } else {
+            this.colour_effect = null
+        }
+        const colour_changed = this.colour_effect !== null
+
         // card effects
         if (card.type === "action" && card.value === "reverse") {
             // reverse direction
@@ -182,26 +192,21 @@ export class Game {
                 // give next player a card
                 target.hand.push(this.drawCard())
             }
+
+            return { action: "drew", colour_change: colour_changed }
+
+        } else if (card.value === "skip") {
+            return { action: "skipped", colour_change: colour_changed }
         }
 
-        if (card.type === "wild") {
-            // change colour
-            if (chosen_colour) {
-                this.colour_effect = chosen_colour
-            } else {
-                return { type: "error", message: "No colour specified" }
-            }
-        } else {
-            this.colour_effect = null
-        }
-
-        return { type: "success" }
+        return { action: null, colour_change: false }
     }
 
-    endGame(player: Player) {
+    endGame(player: Player, card: Card) {
+
         this.state = "finished"
         this.winner = player
-        update("game_end_event", this.room_code, { winner: player })
+        update("game_end_event", this.room_code, { winner: getPublicPlayer(player), card: card })
     }
 
     drawCard() {
