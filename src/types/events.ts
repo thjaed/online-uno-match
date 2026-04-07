@@ -5,6 +5,7 @@ import type { PublicPlayer } from "./player.js"
 
 export interface ClientToServerEvents {
     reconnect: (data: { token: string }) => void
+    reset_room: (data: { token: string }) => void
     create_room: (data: { player_name: string }) => void
     join_room: (data: { room_code: string, player_name: string }) => void
     add_bot: (data: { token: string, name?: string }) => void
@@ -28,7 +29,7 @@ export interface ServerToClientEvents {
     place_card_event: (data: { player: PublicPlayer, card: Card }) => void
     draw_card_event: (data: { player: PublicPlayer }) => void
     game_start_event: (data: {}) => void
-    game_end_event: (data: { winner: PublicPlayer, card: Card }) => void
+    game_end_event: (data: { winner: PublicPlayer }) => void
     player_join_event: (data: { player: PublicPlayer }) => void
     player_leave_event: (data: { player: PublicPlayer }) => void
 }

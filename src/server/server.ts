@@ -59,7 +59,7 @@ function disconnectUser(socket_id: string) {
         if (remove && remove.deleted && remove.users_left) {
             // if there are still users in the room, tell them that the user has left
             const room = remove.room!
-            updateRoom(room.code, "player_leave_event", { player: getPublicUser(user)})
+            updateRoom(room.code, "player_leave_event", { player: getPublicUser(user) })
         }
         expiringUsersMap.delete(user_id)
         UserSocketIdMap.delete(user_id)
@@ -72,7 +72,7 @@ export function updateRoom(room_code: string, type: game_event, data: any) {
     const room = getRoom(room_code)
 
     if (!room) {
-        return  
+        return
     }
 
     io.to(room_code).emit(type, data)
@@ -86,6 +86,25 @@ export function updateRoom(room_code: string, type: game_event, data: any) {
             if (!socket_id) continue
 
             io.to(socket_id).emit("game_status", room.game.getPublicState(user.id))
+        }
+    }
+}
+
+export function updateUser(user_id: string, socket_id: string) {
+    // send data to a specific user when they reconnect
+    const room = getRoomFromUser(user_id)
+    if (room) {
+        const state = room.game.state
+        if (state === "playing") {
+            const data = room.game.getPublicState(user_id)
+            io.to(socket_id).emit("game_status", data)
+
+        } else if (state === "finished") {
+            const winner = getPublicPlayer(room.game.winner!)
+            io.to(socket_id).emit("game_end_event", { winner: winner })
+
+        } else if (state === "waiting") {
+            io.to(socket_id).emit("room_status", getPublicRoomStatus(room.code)!)
         }
     }
 }
@@ -106,12 +125,25 @@ io.on("connection", (socket) => {
                 // send data
                 socket.join(room.code)
                 const user = getUserbyId(user_id)!
-                updateRoom(room.code, "player_join_event", { player: getPublicUser(user)})
+                updateSocket(socket.id, user.id)
+                updateUser(user.id, socket.id)
                 socket.emit("reconnect_success")
             }
         } else {
             socket.emit("reconnect_error")
         }
+    })
+
+    socket.on("reset_room", (data) => {
+        const user_id = auth(data.token, socket.id)
+        if (!user_id) return
+        const room = getRoomFromUser(user_id)
+        if (!room) return
+        if (room.game.state === "finished") {
+            resetRoom(room.code)
+        }
+        io.to(socket.id).emit("room_status", getPublicRoomStatus(room.code)!)
+        console.log(room.game.state)
     })
 
     socket.on("create_room", (data) => {
@@ -175,7 +207,7 @@ io.on("connection", (socket) => {
         updateSocket(socket.id, user.id)
         const player = room.addPlayer(user, "human")
         socket.join(room.code)
-        updateRoom(room.code, "player_join_event", { player: getPublicPlayer(player)})
+        updateRoom(room.code, "player_join_event", { player: getPublicPlayer(player) })
     })
 
     socket.on("add_bot", (data) => {
@@ -225,7 +257,7 @@ io.on("connection", (socket) => {
         }
         const bot: Player = { id: randomUUID(), name: name, hand: [], type: "bot" }
         room.addBot(bot)
-        updateRoom(room.code, "player_join_event", { player: getPublicPlayer(bot)})
+        updateRoom(room.code, "player_join_event", { player: getPublicPlayer(bot) })
     })
 
     socket.on("start_game", (data) => {

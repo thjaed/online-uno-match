@@ -88,7 +88,6 @@ export function removeUser(id: string) {
             return { deleted: true, users_left: true, room: room }
         }
     } else {
-        console.log("no user deleted")
         return { deleted: false }
     }
 }
@@ -179,16 +178,16 @@ export function randomRoomCode() {
 }
 
 export function getPublicPlayer(player: Player): PublicPlayer {
-        return {
+    return {
         "id": player.id,
         "name": player.name,
         "hand_size": player.hand.length,
         "type": player.type
-    }   
+    }
 }
 
 export function getPublicUser(user: User): PublicUser {
-        return {
+    return {
         "id": user.id,
         "name": user.name,
     }

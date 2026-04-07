@@ -8,11 +8,11 @@ const socket = io()
 
 
 window.addEventListener("DOMContentLoaded", async () => {
-    const page = sessionStorage.getItem("page")
     const token = sessionStorage.getItem("token")
 
     if (token && !window.location.search) {
         const success = await reconnect()
+        const page = sessionStorage.getItem("page")
 
         if (success && page) {
             show(page)
@@ -151,6 +151,18 @@ function drawCard() {
     socket.emit("draw_card", data)
 }
 
+function resetRoom() {
+    const token = sessionStorage.getItem("token")
+    if (!token) {
+        return false
+    }
+
+    const data: Parameters<ClientToServerEvents["draw_card"]>[0] = {
+        token: token,
+    }
+    socket.emit("reset_room", data)
+}
+
 
 
 
@@ -215,7 +227,7 @@ document.getElementById("draw_card_btn")?.addEventListener("click", () => {
 
 document.getElementById("back_to_lobby_btn")?.addEventListener("click", () => {
     // when back to lobby button pressed
-    show("lobby_view")
+    resetRoom()
 })
 
 
