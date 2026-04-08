@@ -1,17 +1,41 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Jersey+15&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Jersey+15&family=Play:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="landing.css" />
     <title>UNO Online</title>
-</head>
+  </head>
 
-<body>
+  <body>
     <h1>UNO Online</h1>
-    <button onclick="window.location.href='game.html?action=create'">Create Room</button>
-    <button onclick="window.location.href='game.html?action=join'">Join Room</button>
 
-</body>
+    <div class="main-menu">
+      <button
+        class="start-btn"
+        onclick="window.location.href = 'game.html?action=create'"
+      >
+        Start a Game
+      </button>
 
+      <p class="text_separator">OR</p>
+
+      <button
+        class="start-btn"
+        onclick="window.location.href = 'game.html?action=join'"
+      >
+        Join a Game
+      </button>
+    </div>
+  </body>
 </html>
