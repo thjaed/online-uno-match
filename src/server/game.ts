@@ -56,7 +56,7 @@ export class Game {
 
     randomColour(): Colour {
         const colours: Colour[] = ["blue", "green", "red", "yellow"]
-        return colours[Math.floor(Math.random() * (colours.length - 1))]!
+        return colours[Math.floor(Math.random() * (colours.length))]!
     }
 
     getNextPlayer(increment: number = 1) {

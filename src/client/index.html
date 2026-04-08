@@ -18,24 +18,37 @@
   </head>
 
   <body>
-    <h1>UNO Online</h1>
-
-    <div class="main-menu">
-      <button
-        class="start-btn"
-        onclick="window.location.href = 'game.html?action=create'"
-      >
-        Start a Game
-      </button>
-
-      <p class="text_separator">OR</p>
-
-      <button
-        class="start-btn"
-        onclick="window.location.href = 'game.html?action=join'"
-      >
-        Join a Game
-      </button>
+    <div id="top_carousel" class="carousel">
+      <div id="top_group" class="card-group">
+      </div>
     </div>
-  </body>
+
+    <div class="centre-content">
+      <h1 class="title">UNO Online</h1>
+
+      <div class="main-menu">
+        <button
+          class="start-btn"
+          onclick="window.location.href = 'game.html?action=create'"
+        >
+          Start a Game
+        </button>
+
+        <p class="text_separator">OR</p>
+
+        <button
+          class="start-btn"
+          onclick="window.location.href = 'game.html?action=join'"
+        >
+          Join a Game
+        </button>
+      </div>
+    </div>
+
+    <div id="bottom_carousel" class="carousel">
+      <div id="bottom_group" class="card-group">
+      </div>
+    </div>
+    
+  <script type="module" src="index.js"></script>
 </html>

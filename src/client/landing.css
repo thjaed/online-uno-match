@@ -1,62 +1,115 @@
 body {
-    margin: 0;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-image: linear-gradient(to bottom, #464848, #120a1a);
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  background-image: linear-gradient(to bottom, #464848, #120a1a);
 }
 
-h1 {
-    position: absolute;
-    left: 50%;
-    top: calc(50% - 250px);
-    transform: translateX(-50%);
-    color: #f3f3f3;
-    font-family: "Jersey 15", sans-serif;
-    font-weight: 400;
-    font-style: normal;
-    font-size: clamp(50px, 10vw, 100px);
-    margin: 0;
+.centre-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
+  gap: 5vh;
+}
+
+.title {
+  color: #f3f3f3;
+  font-family: "Jersey 15", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  font-size: clamp(50px, 20vw, 100px);
+  margin: 0;
 }
 
 .main-menu {
-    background-color: #9c9c9c;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 300px;
-    padding: 20px;
-    border-radius: 12px;
+  background-color: #9c9c9c;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 300px;
+  padding: 20px;
+  border-radius: 12px;
 }
 
 .start-btn {
-    background-color: #FFFFFF;
-    border-radius: 12px;
-    border: 2px solid #464848;
-    width: 100%;
-    padding: 17px;
-    text-align: center;
-    text-decoration: none;
-    display: block;
-    font-family: "Play", sans-serif;
-    font-weight: 400;
-    font-style: normal;
-    font-size: 22px;
-    cursor: pointer;
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 2px solid #464848;
+  width: 100%;
+  padding: 17px;
+  text-align: center;
+  text-decoration: none;
+  display: block;
+  font-family: "Play", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 22px;
+  cursor: pointer;
 }
 
 .start-btn:hover {
-    background-color: #f0f0f0;
+  background-color: #f0f0f0;
+  transform: translateY(-3px);
+}
+
+.start-btn:active {
+  transform: translateY(2px);
 }
 
 .text_separator {
-    font-family: "Play", sans-serif;
-    font-weight: 700;
-    font-style: normal;
+  font-family: "Play", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+  color: #f3f3f3;
+}
+
+.carousel {
+  margin: 0;
+  width: 100vw;
+  padding: 20px 0;
+  overflow: hidden;
+  display: flex;
+  z-index: -1;
+  > * {
+    flex: 0 0 100%;
+  }
+}
+
+.card {
+  opacity: 0.6;
+  z-index: -1;
+}
+
+.card:nth-child(odd) {
+  transform: rotate(-1deg);
+}
+
+.card:nth-child(even) {
+  transform: rotate(1deg);
+}
+
+.card-group {
+  display: flex;
+  gap: 12px;
+  padding-right: 12px;
+  will-change: transform;
+  animation: scrolling 20s linear infinite;
+}
+
+@keyframes scrolling {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+#top_group {
+  animation-direction: reverse;
 }
