@@ -25,13 +25,13 @@ body {
   margin: 0;
 }
 
-.main-menu {
+.menu {
   background-color: #bcbcbc;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 300px;
+  width: 320px;
   padding: 20px;
   border-radius: 12px;
   gap: 0px;
@@ -63,6 +63,19 @@ button {
   font-size: 22px;
 }
 
+#back-btn {
+  padding: 7px;
+  padding-inline: 20px;
+  font-size: 18px;
+  margin-bottom: 15px
+}
+
+#submit-btn {
+  width: 100%;
+  padding: 10px;
+  font-size: 22px;
+}
+
 
 button:hover {
   background-color: #807f7f;
@@ -72,29 +85,33 @@ button:active {
   transform: translateY(2px);
 }
 
-.text_separator {
+p {
   font-family: "Play", sans-serif;
-  font-weight: 700;
+  font-weight: 400;
   font-style: normal;
   color: #000000;
 }
 
-.join-game-text {
-  font-family: "Play", sans-serif;
-  font-weight: 400;
-  font-style: normal;
+#text-separator {
+  font-weight: 700;
+}
+
+#name-input-menu-title {
   font-size: 22px;
-  color: #000000;
   margin-top: 0px;
-  margin-bottom: 12px;
-  display: none;
-  
+  margin-bottom: 15px;
 }
 
 .join-container {
   display: flex;
   justify-content: space-between;
-  gap: 3px;
+  gap: 5px;
+}
+
+.title-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
 }
 
 input {
@@ -110,9 +127,13 @@ input {
   color: #000000;
   font-size: 18px;
   width: 100%;
+  box-sizing: border-box;
 }
 
-
+#player-name-input {
+  margin-bottom: 10px;
+  height: 50px;
+}
 
 .carousel {
   margin: 0;
@@ -121,7 +142,8 @@ input {
   overflow: hidden;
   display: flex;
   z-index: -1;
-  > * {
+
+  >* {
     flex: 0 0 100%;
   }
 }
@@ -151,11 +173,12 @@ input {
   0% {
     transform: translateX(0);
   }
+
   100% {
     transform: translateX(-100%);
   }
 }
 
-#top_group {
+#top-group {
   animation-direction: reverse;
 }

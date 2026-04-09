@@ -1,59 +1,65 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Jersey+15&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Jersey+15&family=Play:wght@400;700&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="landing.css" />
-    <title>UNO Online</title>
-  </head>
 
-  <body>
-    <div id="top_carousel" class="carousel" style="display: none">
-      <div id="top_group" class="card-group">
-      </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Jersey+15&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Jersey+15&family=Play:wght@400;700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="landing.css" />
+  <title>UNO Online</title>
+</head>
+
+<body>
+  <div id="top-carousel" class="carousel" style="display: none">
+    <div id="top-group" class="card-group">
     </div>
+  </div>
 
-    <div class="centre-content">
-      <h1 class="title">UNO Online</h1>
+  <div class="centre-content">
+    <h1 class="title">UNO Online</h1>
 
-      <div class="main-menu">
-        <button
-          id="start-btn"
-          onclick="window.location.href = 'game.html?action=create'"
-        >
-          Start a Game
-        </button>
+    <div id="main-menu" class="menu">
+      <button id="start-btn">
+        Start a Game
+      </button>
 
-        <p class="text_separator">OR</p>
+      <p id="text-separator">OR</p>
 
-        <p class="join-game-text">Join a Game</p>
-
-        <div class="join-container">
-          <input type="text" id="room_code_input" placeholder="Game Code"><br><br>
-
-          <button
-          id="join-btn"
-          >
+      <div class="join-container">
+        <input type="text" id="room-code-input" placeholder="Game Code">
+        <button id="join-btn">
           Join
-          </button>
-        </div>
+        </button>
       </div>
     </div>
 
-    <div id="bottom_carousel" class="carousel" style="display: none">
-      <div id="bottom_group" class="card-group">
+
+    <div id="name-input-menu" class="menu" style="display: none">
+      <div class="title-container">
+        <button class="menu-text" id="back-btn">
+          Back
+        </button>
+        <p id="name-input-menu-title"></p>
       </div>
+
+      <input type="text" id="player-name-input" placeholder="Your Player Name">
+      <button id="submit-btn">
+        Enter
+      </button>
+
     </div>
-    
-  <script type="module" src="index.js"></script>
+  </div>
+
+  <div id="bottom-carousel" class="carousel" style="display: none">
+    <div id="bottom-group" class="card-group">
+    </div>
+  </div>
+</body>
+
+<script type="module" src="index.js"></script>
+
 </html>

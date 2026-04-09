@@ -9,14 +9,15 @@ function randomCardAsset() {
 
     return `assets/${colour}_${value}.svg`
 }
+
 const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
-const card_count = Math.max(10, Math.round(vw / 100))
+const card_count = Math.max(12, Math.round(vw / 100))
 
 // create card elements
 for (const edge of ["bottom", "top"]) {
     for (let c = 0; c < card_count; c++) {
         // add random cards to carousel
-        const group = document.getElementById(`${edge}_group`)!
+        const group = document.getElementById(`${edge}-group`)!
 
         const card_div = document.createElement("div")
         card_div.className = "card"
@@ -31,19 +32,40 @@ for (const edge of ["bottom", "top"]) {
     }
 
     // duplicate group for infinite scroll
-    const carousel = document.getElementById(`${edge}_carousel`)!
-    const group = document.getElementById(`${edge}_group`)!
+    const carousel = document.getElementById(`${edge}-carousel`)!
+    const group = document.getElementById(`${edge}-group`)!
 
     const clone = group.cloneNode(true) as HTMLDivElement
     clone.setAttribute("aria-hidden", "true")
 
     carousel.appendChild(clone);
-    carousel.style=""
+    carousel.style.display = ""
 }
 
+
 document.getElementById("join-btn")?.addEventListener("click", () => {
-    const code_input = (document.getElementById("room_code_input") as HTMLInputElement)
-    window.location.href = 'game.html?action=join'
+    const code_input = (document.getElementById("room-code-input") as HTMLInputElement)
+    const code = code_input.value
+    const menu_title = (document.getElementById("name-input-menu-title")! as HTMLParagraphElement)
+    menu_title.textContent = `Game #${code}`
+
+    document.getElementById("main-menu")!.style.display = "none"
+    document.getElementById("name-input-menu")!.style.display = "block";
     code_input.value = ""
-    console.log("join button pressed")
+})
+
+document.getElementById("back-btn")?.addEventListener("click", () => {
+    document.getElementById("main-menu")!.style.display = "flex"
+    document.getElementById("name-input-menu")!.style.display = "none"
+    
+    const menu_title = (document.getElementById("name-input-menu-title")! as HTMLParagraphElement)
+    menu_title.textContent = ""
+})
+
+document.getElementById("start-btn")?.addEventListener("click", () => {
+    const menu_title = (document.getElementById("name-input-menu-title")! as HTMLParagraphElement)
+    menu_title.textContent = "Create Game"
+
+    document.getElementById("main-menu")!.style.display = "none"
+    document.getElementById("name-input-menu")!.style.display = "block";
 })
