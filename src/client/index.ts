@@ -9,10 +9,12 @@ function randomCardAsset() {
 
     return `assets/${colour}_${value}.svg`
 }
+const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
+const card_count = Math.max(10, Math.round(vw / 100))
 
 // create card elements
 for (const edge of ["bottom", "top"]) {
-    for (let c = 0; c < 30; c++) {
+    for (let c = 0; c < card_count; c++) {
         // add random cards to carousel
         const group = document.getElementById(`${edge}_group`)!
 
@@ -36,4 +38,12 @@ for (const edge of ["bottom", "top"]) {
     clone.setAttribute("aria-hidden", "true")
 
     carousel.appendChild(clone);
+    carousel.style=""
 }
+
+document.getElementById("join-btn")?.addEventListener("click", () => {
+    const code_input = (document.getElementById("room_code_input") as HTMLInputElement)
+    window.location.href = 'game.html?action=join'
+    code_input.value = ""
+    console.log("join button pressed")
+})
