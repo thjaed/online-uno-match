@@ -19,25 +19,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             return
         }
     }
-
-    if (window.location.search) {
-        show_page_param()
-    } else {
-        window.location.href = "/"
-    }
-
 })
-
-function show_page_param() {
-    const queryString = window.location.search
-    const urlParams = new URLSearchParams(queryString)
-
-    if (urlParams.get("action") === "create") {
-        show("create_room_view")
-    } else if (urlParams.get("action") === "join") {
-        show("join_room_view")
-    }
-}
 
 function show(viewId: string) {
     // change page view
@@ -84,16 +66,6 @@ function reconnect(): Promise<boolean> {
             resolve(true)
         })
     })
-}
-
-function createRoom(data: Parameters<ClientToServerEvents["create_room"]>[0]) {
-    // create a room on the server
-    socket.emit("create_room", data)
-}
-
-function joinRoom(data: Parameters<ClientToServerEvents["join_room"]>[0]) {
-    // join a room on the server
-    socket.emit("join_room", data)
 }
 
 function addBot() {
@@ -165,49 +137,6 @@ function resetRoom() {
 
 
 
-
-
-document.getElementById("create_room_btn")?.addEventListener("click", () => {
-    // when create room (submit) button pressed
-    const input = (document.getElementById("player_name") as HTMLInputElement)
-    const player_name = input.value
-
-    createRoom({
-        player_name: player_name
-    })
-    input.value = ""
-    window.history.replaceState({}, "", window.location.pathname)
-
-})
-
-document.getElementById("join_room_btn")?.addEventListener("click", () => {
-    // when join room (submit) button pressed
-    const name_input = (document.getElementById("player_name_join") as HTMLInputElement)
-    const code_input = (document.getElementById("room_code_input") as HTMLInputElement)
-
-    const player_name = name_input.value
-    const room_code = code_input.value
-
-    joinRoom({
-        player_name: player_name,
-        room_code: room_code
-    })
-
-    name_input.value = ""
-    code_input.value = ""
-    window.history.replaceState({}, "", window.location.pathname)
-
-})
-
-document.getElementById("create_room_page_btn")?.addEventListener("click", () => {
-    // when create room (page) button pressed
-    show("create_room_view")
-})
-
-document.getElementById("join_room_page_btn")?.addEventListener("click", () => {
-    // when join room (page) button pressed
-    show("join_room_view")
-})
 
 document.getElementById("add_bot_btn")?.addEventListener("click", () => {
     // when add bot button pressed

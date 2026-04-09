@@ -1,4 +1,64 @@
+import type { Socket } from "socket.io-client"
+import type { ClientToServerEvents, ServerToClientEvents } from "../types/events.js"
 import type { ActionValue, Colour, NumberValue } from "../types/game.js"
+
+declare const io: () => Socket<ServerToClientEvents, ClientToServerEvents>
+
+const socket = io()
+
+function clearInput(elementId: string): void {
+    const input = (document.getElementById(elementId) as HTMLInputElement)
+    input.value = ""
+}
+
+function clearText(elementId: string): void {
+    const text = (document.getElementById(elementId)! as HTMLParagraphElement)
+    text.textContent = ""
+}
+
+window.addEventListener("DOMContentLoaded", async () => {
+    sessionStorage.removeItem("action")
+})
+
+function roomExists(room_code: string): Promise<boolean> {
+    return new Promise((resolve) => {
+        const data: Parameters<ClientToServerEvents["room_exists"]>[0] = {
+            room_code: room_code,
+        }
+
+        socket.emit("room_exists", data)
+
+        const timeout = setTimeout(() => {
+            resolve(false)
+        }, 2000)
+
+        socket.once("room_existence", (data) => {
+            if (data.room_code === room_code &&
+                data.result === true
+            ) {
+                resolve(true)
+            } else {
+                resolve(false)
+            }
+        })
+
+    })
+}
+
+function createRoom(data: Parameters<ClientToServerEvents["create_room"]>[0]) {
+    socket.emit("create_room", data)
+}
+
+function joinRoom(data: Parameters<ClientToServerEvents["join_room"]>[0]) {
+    socket.emit("join_room", data)
+}
+
+function showInputError(elementId: string, error: string): void {
+    const e = (document.getElementById(elementId)! as HTMLParagraphElement)
+    e.style.color = "#cb190b"
+    e.textContent = error
+    e.style.display = "block"
+}
 
 function randomCardAsset() {
     const colours: Colour[] = ["blue", "green", "red", "yellow"]
@@ -43,29 +103,86 @@ for (const edge of ["bottom", "top"]) {
 }
 
 
-document.getElementById("join-btn")?.addEventListener("click", () => {
+document.getElementById("join-btn")?.addEventListener("click", async () => {
     const code_input = (document.getElementById("room-code-input") as HTMLInputElement)
     const code = code_input.value
+
+    if (code.length !== 6) {
+        showInputError("game-code-error", "Error: Game not found")
+        return
+    }
+
+    const room_exists = await roomExists(code)
+
+    if (!room_exists) {
+        showInputError("game-code-error", "Error: Game not found")
+        return
+    }
+
+    sessionStorage.setItem("action", "join")
     const menu_title = (document.getElementById("name-input-menu-title")! as HTMLParagraphElement)
     menu_title.textContent = `Game #${code}`
 
+    const error_text = (document.getElementById("game-code-error")! as HTMLParagraphElement)
+    error_text.textContent = ""
+    error_text.style.display = "none"
     document.getElementById("main-menu")!.style.display = "none"
-    document.getElementById("name-input-menu")!.style.display = "block";
-    code_input.value = ""
+    document.getElementById("name-input-menu")!.style.display = "block"
 })
 
 document.getElementById("back-btn")?.addEventListener("click", () => {
     document.getElementById("main-menu")!.style.display = "flex"
     document.getElementById("name-input-menu")!.style.display = "none"
-    
-    const menu_title = (document.getElementById("name-input-menu-title")! as HTMLParagraphElement)
-    menu_title.textContent = ""
+
+    clearInput("room-code-input")
+    clearInput("player-name-input")
+    clearText("game-code-error")
+    clearText("name-input-menu-title")
+    sessionStorage.removeItem("action")
 })
 
 document.getElementById("start-btn")?.addEventListener("click", () => {
     const menu_title = (document.getElementById("name-input-menu-title")! as HTMLParagraphElement)
     menu_title.textContent = "Create Game"
+    sessionStorage.setItem("action", "create")
 
     document.getElementById("main-menu")!.style.display = "none"
     document.getElementById("name-input-menu")!.style.display = "block";
+})
+
+document.getElementById("submit-btn")?.addEventListener("click", () => {
+    const action = sessionStorage.getItem("action")
+    if (action === "create") {
+        const input = (document.getElementById("player-name-input") as HTMLInputElement)
+        const player_name = input.value
+
+        createRoom({
+            player_name: player_name
+        })
+
+        window.location.href = "/game.html"
+
+    } else if (action === "join") {
+        const name_input = (document.getElementById("player-name-input") as HTMLInputElement)
+        const code_input = (document.getElementById("room-code-input") as HTMLInputElement)
+
+        const player_name = name_input.value
+        const room_code = code_input.value
+
+        joinRoom({
+            player_name: player_name,
+            room_code: room_code
+        })
+
+        socket.once("auth", (data) => {
+            sessionStorage.setItem("token", data.user.token)
+            window.location.href = "/game.html"
+        })
+
+        clearInput("room-code-input")
+        clearInput("player-name-input")
+        clearText("game-code-error")
+        clearText("name-input-menu-title")
+        sessionStorage.removeItem("action")
+    }
 })

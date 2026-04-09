@@ -134,6 +134,23 @@ io.on("connection", (socket) => {
         }
     })
 
+    socket.on("room_exists", (data) => {
+        if (!(typeof data.room_code === "string" &&
+            data.room_code.length === 6)) {
+            socket.emit("room_existence", ({ room_code: data.room_code, result: false }))
+            return
+        }
+
+        const room = getRoom(data.room_code)
+
+        if (!room) {
+            socket.emit("room_existence", ({ room_code: data.room_code, result: false }))
+            return
+        }
+
+        socket.emit("room_existence", ({ room_code: data.room_code, result: true }))
+    })
+
     socket.on("reset_room", (data) => {
         const user_id = auth(data.token, socket.id)
         if (!user_id) return

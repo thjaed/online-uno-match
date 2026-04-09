@@ -102,6 +102,10 @@ p {
   margin-bottom: 15px;
 }
 
+#game-code-error {
+  margin-bottom: 0px;
+}
+
 .join-container {
   display: flex;
   justify-content: space-between;

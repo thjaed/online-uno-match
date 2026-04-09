@@ -6,6 +6,7 @@ import type { PublicPlayer } from "./player.js"
 export interface ClientToServerEvents {
     reconnect: (data: { token: string }) => void
     reset_room: (data: { token: string }) => void
+    room_exists: (data: { room_code: string }) => void
     create_room: (data: { player_name: string }) => void
     join_room: (data: { room_code: string, player_name: string }) => void
     add_bot: (data: { token: string, name?: string }) => void
@@ -18,6 +19,7 @@ export interface ServerToClientEvents {
     error: (data: { message: string }) => void
     reconnect_error: () => void
     reconnect_success: () => void
+    room_existence: (data: { room_code: string, result: boolean }) => void
     auth: (data: { user: User }) => void
     room_status: (data: {
         room_code: string,
