@@ -1,13 +1,3 @@
-body {
-  margin: 0;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  background-image: linear-gradient(to bottom, #464848, #120a1a);
-}
-
 .centre-content {
   display: flex;
   flex-direction: column;
@@ -26,7 +16,7 @@ body {
 }
 
 .menu {
-  background-color: #bcbcbc;
+  background-color: #231641;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -35,20 +25,6 @@ body {
   padding: 20px;
   border-radius: 12px;
   gap: 0px;
-}
-
-button {
-  background-color: #ffffff;
-  border-radius: 12px;
-  border: 2px solid #464848;
-  text-align: center;
-  text-decoration: none;
-  display: block;
-  font-family: "Play", sans-serif;
-  font-weight: 400;
-  font-style: normal;
-  cursor: pointer;
-  color: #000000;
 }
 
 #start-btn {
@@ -76,22 +52,6 @@ button {
   font-size: 22px;
 }
 
-
-button:hover {
-  background-color: #807f7f;
-}
-
-button:active {
-  transform: translateY(2px);
-}
-
-p {
-  font-family: "Play", sans-serif;
-  font-weight: 400;
-  font-style: normal;
-  color: #000000;
-}
-
 #text-separator {
   font-weight: 700;
 }
@@ -116,22 +76,6 @@ p {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-}
-
-input {
-  background-color: #ffffff;
-  border-radius: 12px;
-  padding: 10px;
-  border: 2px solid #464848;
-  text-decoration: none;
-  display: block;
-  font-family: "Play", sans-serif;
-  font-weight: 400;
-  font-style: normal;
-  color: #000000;
-  font-size: 18px;
-  width: 100%;
-  box-sizing: border-box;
 }
 
 #player-name-input {

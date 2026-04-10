@@ -138,12 +138,12 @@ function resetRoom() {
 
 
 
-document.getElementById("add_bot_btn")?.addEventListener("click", () => {
+document.getElementById("add-bot-btn")?.addEventListener("click", () => {
     // when add bot button pressed
     addBot()
 })
 
-document.getElementById("start_game_btn")?.addEventListener("click", () => {
+document.getElementById("start-game-btn")?.addEventListener("click", () => {
     // when start game button pressed
     startGame()
 })
@@ -167,10 +167,10 @@ socket.on("room_status", (data) => {
         // room status recieved
         show("lobby_view")
         const code = data.room_code
-        document.getElementById("room_code")!.innerHTML = `Room Code: ${code}`
+        document.getElementsByClassName("code")[0]!.innerHTML = `${code}`
 
         // update player list
-        document.getElementById("user_list")!.innerHTML = ''
+        document.getElementsByClassName("player-list")[0]!.innerHTML = ''
 
         for (const p of data.public_players) {
             const el = document.createElement("p")
@@ -180,10 +180,12 @@ socket.on("room_status", (data) => {
                 el.innerHTML = p.name
             }
 
-            document.getElementById("user_list")?.appendChild(el)
+            document.getElementsByClassName("player-list")[0]?.appendChild(el)
         }
     }
 })
+
+console.log(sessionStorage.getItem("token"))
 
 socket.on("error", (data) => {
     alert(`Error: ${data.message}`)

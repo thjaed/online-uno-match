@@ -1,6 +1,7 @@
 import type { Socket } from "socket.io-client"
 import type { ClientToServerEvents, ServerToClientEvents } from "../types/events.js"
 import type { ActionValue, Colour, NumberValue } from "../types/game.js"
+import type { User } from "../types/player.js"
 
 declare const io: () => Socket<ServerToClientEvents, ClientToServerEvents>
 
@@ -52,6 +53,15 @@ function createRoom(data: Parameters<ClientToServerEvents["create_room"]>[0]) {
 function joinRoom(data: Parameters<ClientToServerEvents["join_room"]>[0]) {
     socket.emit("join_room", data)
 }
+
+function waitForAuth(): Promise<{ user: User }> {
+    return new Promise((resolve) => {
+        socket.once("auth", (data) => {
+            resolve(data)
+        })
+    })
+}
+
 
 function showInputError(elementId: string, error: string): void {
     const e = (document.getElementById(elementId)! as HTMLParagraphElement)
@@ -134,14 +144,18 @@ document.getElementById("back-btn")?.addEventListener("click", () => {
     document.getElementById("main-menu")!.style.display = "flex"
     document.getElementById("name-input-menu")!.style.display = "none"
 
+    const error = (document.getElementById("game-code-error")! as HTMLParagraphElement)
+    error.textContent = ""
+    error.style.display = "none"
+
     clearInput("room-code-input")
     clearInput("player-name-input")
-    clearText("game-code-error")
     clearText("name-input-menu-title")
     sessionStorage.removeItem("action")
 })
 
 document.getElementById("start-btn")?.addEventListener("click", () => {
+    clearInput("player-name-input")
     const menu_title = (document.getElementById("name-input-menu-title")! as HTMLParagraphElement)
     menu_title.textContent = "Create Game"
     sessionStorage.setItem("action", "create")
@@ -150,7 +164,8 @@ document.getElementById("start-btn")?.addEventListener("click", () => {
     document.getElementById("name-input-menu")!.style.display = "block";
 })
 
-document.getElementById("submit-btn")?.addEventListener("click", () => {
+document.getElementById("submit-btn")?.addEventListener("click", async () => {
+    (document.getElementById("submit-btn")! as HTMLButtonElement).disabled = true
     const action = sessionStorage.getItem("action")
     if (action === "create") {
         const input = (document.getElementById("player-name-input") as HTMLInputElement)
@@ -159,8 +174,6 @@ document.getElementById("submit-btn")?.addEventListener("click", () => {
         createRoom({
             player_name: player_name
         })
-
-        window.location.href = "/game.html"
 
     } else if (action === "join") {
         const name_input = (document.getElementById("player-name-input") as HTMLInputElement)
@@ -173,16 +186,11 @@ document.getElementById("submit-btn")?.addEventListener("click", () => {
             player_name: player_name,
             room_code: room_code
         })
-
-        socket.once("auth", (data) => {
-            sessionStorage.setItem("token", data.user.token)
-            window.location.href = "/game.html"
-        })
-
-        clearInput("room-code-input")
-        clearInput("player-name-input")
-        clearText("game-code-error")
-        clearText("name-input-menu-title")
-        sessionStorage.removeItem("action")
     }
+
+    const data = await waitForAuth()
+
+    sessionStorage.setItem("token", data.user.token)
+    window.location.href = "/game.html"
+    return
 })

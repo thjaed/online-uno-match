@@ -1,0 +1,55 @@
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100vw;
+    padding: 0 2vw;
+    box-sizing: border-box;
+    background-color: #231641;
+    margin: 0 auto;
+}
+
+.header-title {
+  color: #f3f3f3;
+  font-family: "Jersey 15", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  font-size: clamp(35px, 6vw, 70px);
+  margin: 0;
+}
+
+.game-code-group {
+    display: flex;
+    gap: 15px;
+}
+
+.game-code-label {
+    font-family: "Play", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+    color: #ffffff;
+    font-size: clamp(22px, 2.3vw, 50px);
+}
+
+.code {
+    font-family: "Play", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+    color: #ffffff;
+    font-size: clamp(22px, 2.3vw, 50px);
+}
+
+.centre-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2vh;
+}
+
+.centre-content-title {
+    font-family: "Play", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+    color: #ffffff;
+    font-size: clamp(40px, 2.7vw, 70px);
+}
