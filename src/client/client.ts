@@ -27,7 +27,14 @@ function show(viewId: string) {
         (el as HTMLElement).style.display = "none"
     })
 
-    document.getElementById(viewId)!.style.display = "block"
+    let style
+    if (viewId === "lobby_view") {
+        style = "grid"
+    } else {
+        style = "block"
+    }
+
+    document.getElementById(viewId)!.style.display = style
     sessionStorage.setItem("page", viewId)
 }
 
@@ -136,7 +143,10 @@ function resetRoom() {
 }
 
 
-
+document.getElementById("leave-btn")?.addEventListener("click", () => {
+    // when leave button pressed
+    window.location.href = "/"
+})
 
 document.getElementById("add-bot-btn")?.addEventListener("click", () => {
     // when add bot button pressed
@@ -170,22 +180,24 @@ socket.on("room_status", (data) => {
         document.getElementsByClassName("code")[0]!.innerHTML = `${code}`
 
         // update player list
-        document.getElementsByClassName("player-list")[0]!.innerHTML = ''
+        const table = document.getElementsByClassName("player-list")[0]!
+        table.innerHTML = ''
 
         for (const p of data.public_players) {
-            const el = document.createElement("p")
+            const row = document.createElement("tr")
+            const playerEl = document.createElement("td")
+            playerEl.className = "player"
             if (p.type === "bot") {
-                el.innerHTML = `${p.name} (Bot)`
+                playerEl.innerHTML = `${p.name} (Bot)`
             } else {
-                el.innerHTML = p.name
+                playerEl.innerHTML = p.name
             }
 
-            document.getElementsByClassName("player-list")[0]?.appendChild(el)
+            row.appendChild(playerEl)
+            table.appendChild(row)
         }
     }
 })
-
-console.log(sessionStorage.getItem("token"))
 
 socket.on("error", (data) => {
     alert(`Error: ${data.message}`)

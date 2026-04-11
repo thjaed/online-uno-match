@@ -2,9 +2,6 @@ body {
   margin: 0;
   height: 100vh;
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
   background-image: linear-gradient(to bottom, #101010, #200639);
 }
 

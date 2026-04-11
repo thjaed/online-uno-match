@@ -1,4 +1,17 @@
+body {
+    height: 100%;
+}
+
+#lobby_view {
+    min-height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr;
+}
+
 header {
+    grid-area: 1 / 1;
+    grid-row: 1;
+    align-self: start;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -40,10 +53,21 @@ header {
 }
 
 .centre-content {
+  grid-area: 1 / 1;
+  grid-row: 2;
+  justify-self: center;
+  align-self: center;
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 2vh;
+  background-color: #1a132a;
+  padding: 20px;
+  border-radius: 12px;
+  width: 90vw;
+  min-width: fit-content;
+  max-width: 400px;
+  max-height: 100%;
+  min-height: fit-content;
 }
 
 .centre-content-title {
@@ -51,5 +75,73 @@ header {
     font-weight: 400;
     font-style: normal;
     color: #ffffff;
-    font-size: clamp(40px, 2.7vw, 70px);
+    font-size: clamp(40px, 2vh, 50px);
+    margin: 0;
+}
+
+.table-wrapper {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+table {
+    font-family: "Play", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+    color: #ffffff;
+    font-size: 20px;
+    border-radius: 12px;
+    border-collapse: collapse;
+    width: 100%;
+    min-height: fit-content;
+}
+
+td {
+    padding: clamp(1px, 2.5vh, 12px);
+    border-bottom: 3px solid #1a132a;
+}
+
+tr:nth-child(even){ 
+    background-color: #231641;
+}
+
+tr:nth-child(odd){ 
+    background-color: #1e1237;
+}
+
+tr:last-child td {
+    border-bottom: none;
+}
+
+.centre-content-btns {
+    display: flex;
+    justify-content: space-between;
+}
+
+.right-btns {
+    display: flex;
+    gap: 5px;
+}
+
+.centre-btn {
+    padding: 10px 15px;
+    font-size: 18px;
+}
+
+#leave-btn {
+    background-color: #87060D;
+    border: 2px solid #87060D;
+}
+
+#leave-btn:hover {
+    border: 2px solid #ff0000;
+}
+
+#start-game-btn {
+    background-color: #0C771F;
+    border: 2px solid #0C771F;
+}
+
+#start-game-btn:hover {
+  border: 2px solid #09e025;
 }

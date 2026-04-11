@@ -15,7 +15,7 @@
 </head>
 
 <body>
-    <div id="lobby_view" style="display: none">
+    <div id="lobby_view">
         <header>
             <h1 class="header-title">UNO Online</h1>
             <div class="game-code-group">
@@ -25,14 +25,16 @@
         </header>
         <div class="centre-content">
             <h2 class="centre-content-title">Players</h2>
-            <div class="player-list"></div>
+            <div class="table-wrapper">
+                <table class="player-list"></table>
+            </div>
             <div class="centre-content-btns">
                 <div class="left-btns">
-                    <button id="leave-btn">Leave</button>
+                    <button class="centre-btn" id="leave-btn">Leave</button>
                 </div>
                 <div class="right-btns">
-                    <button id="add-bot-btn">Add Bot</button>
-                    <button id="start-game-btn">Start Game</button>
+                    <button class="centre-btn" id="add-bot-btn">Add Bot</button>
+                    <button class="centre-btn" id="start-game-btn">Start Game</button>
                 </div>
             </div>
         </div>
