@@ -188,9 +188,19 @@ document.getElementById("submit-btn")?.addEventListener("click", async () => {
         })
     }
 
+    const submit_btn = (document.getElementById("submit-btn")! as HTMLButtonElement)
+    submit_btn.disabled = true
+
     const data = await waitForAuth()
 
-    sessionStorage.setItem("token", data.user.token)
-    window.location.href = "/game.html"
+    if ("err_message" in data) {
+        showInputError("name-error", data.err_message)
+    } else {
+        sessionStorage.setItem("token", data.user.token)
+        window.location.href = "/game.html";
+    }
+
+    clearErrors()
+    submit_btn.disabled = false
     return
 })
