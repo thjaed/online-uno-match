@@ -7,16 +7,6 @@ declare const io: () => Socket<ServerToClientEvents, ClientToServerEvents>
 
 const socket = io()
 
-function clearInput(elementId: string): void {
-    const input = (document.getElementById(elementId) as HTMLInputElement)
-    input.value = ""
-}
-
-function clearText(elementId: string): void {
-    const text = (document.getElementById(elementId)! as HTMLParagraphElement)
-    text.textContent = ""
-}
-
 window.addEventListener("DOMContentLoaded", async () => {
     sessionStorage.removeItem("action")
 })
@@ -54,20 +44,41 @@ function joinRoom(data: Parameters<ClientToServerEvents["join_room"]>[0]) {
     socket.emit("join_room", data)
 }
 
-function waitForAuth(): Promise<{ user: User }> {
+function waitForAuth(): Promise<{ user: User } | { err_message: string }> {
     return new Promise((resolve) => {
         socket.once("auth", (data) => {
+            resolve(data)
+        })
+
+        socket.once("error", (data) => {
             resolve(data)
         })
     })
 }
 
-
 function showInputError(elementId: string, error: string): void {
     const e = (document.getElementById(elementId)! as HTMLParagraphElement)
-    e.style.color = "#cb190b"
     e.textContent = error
     e.style.display = "block"
+}
+
+function clearInput(elementId: string): void {
+    const input = (document.getElementById(elementId) as HTMLInputElement)
+    input.value = ""
+}
+
+function clearText(elementId: string): void {
+    const text = (document.getElementById(elementId)! as HTMLParagraphElement)
+    text.textContent = ""
+}
+
+function clearErrors(): void {
+    const errors = document.querySelectorAll<HTMLParagraphElement>(".error");
+
+    errors.forEach((error) => {
+        error.textContent = "";
+        error.style.display = "none";
+    });
 }
 
 function randomCardAsset() {
@@ -95,8 +106,8 @@ for (const edge of ["bottom", "top"]) {
 
         const asset_name = randomCardAsset()
         const card_element = document.createElement("img")
+        card_element.className = "card_img"
         card_element.src = asset_name
-        card_element.height = 150
 
         card_div.appendChild(card_element)
     }
@@ -117,15 +128,20 @@ document.getElementById("join-btn")?.addEventListener("click", async () => {
     const code_input = (document.getElementById("room-code-input") as HTMLInputElement)
     const code = code_input.value
 
+    if (code.length === 0) {
+        showInputError("game-code-error", "Game code required")
+        return
+    }
+
     if (code.length !== 6) {
-        showInputError("game-code-error", "Error: Game not found")
+        showInputError("game-code-error", "Game code must be 6 digits")
         return
     }
 
     const room_exists = await roomExists(code)
 
     if (!room_exists) {
-        showInputError("game-code-error", "Error: Game not found")
+        showInputError("game-code-error", "Game not found")
         return
     }
 
@@ -144,10 +160,7 @@ document.getElementById("back-btn")?.addEventListener("click", () => {
     document.getElementById("main-menu")!.style.display = "flex"
     document.getElementById("name-input-menu")!.style.display = "none"
 
-    const error = (document.getElementById("game-code-error")! as HTMLParagraphElement)
-    error.textContent = ""
-    error.style.display = "none"
-
+    clearErrors()
     clearInput("room-code-input")
     clearInput("player-name-input")
     clearText("name-input-menu-title")
@@ -165,11 +178,15 @@ document.getElementById("start-btn")?.addEventListener("click", () => {
 })
 
 document.getElementById("submit-btn")?.addEventListener("click", async () => {
-    (document.getElementById("submit-btn")! as HTMLButtonElement).disabled = true
     const action = sessionStorage.getItem("action")
     if (action === "create") {
         const input = (document.getElementById("player-name-input") as HTMLInputElement)
         const player_name = input.value
+
+        if (player_name.length === 0) {
+            showInputError("name-error", "Player name is required")
+            return
+        }
 
         createRoom({
             player_name: player_name

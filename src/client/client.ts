@@ -38,6 +38,12 @@ function show(viewId: string) {
     sessionStorage.setItem("page", viewId)
 }
 
+function showInputError(elementId: string, error: string): void {
+    const e = (document.getElementById(elementId)! as HTMLParagraphElement)
+    e.textContent = error
+    e.style.display = "block"
+}
+
 function getCardAsset(card: Card): string {
     let asset_name
     if (card.type === "number" || card.type == "action") {
@@ -50,7 +56,21 @@ function getCardAsset(card: Card): string {
 
 
 
+function waitForSocketEvent(idealResponse: keyof ServerToClientEvents): Promise<{ "success": boolean, message?: string, data?: any }> {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve({"success": false, "message": "Timed out"})
+        }, 1000)
 
+        socket.once("error", (data) => {
+            resolve({"success": false, message: data.err_message})
+        })
+
+        socket.once(idealResponse, (data: any) => {
+            resolve({"success": true, data: data})
+        })
+    })
+}
 
 function reconnect(): Promise<boolean> {
     return new Promise((resolve) => {
@@ -75,7 +95,7 @@ function reconnect(): Promise<boolean> {
     })
 }
 
-function addBot() {
+async function addBot() {
     const token = sessionStorage.getItem("token")
     if (!token) {
         return false
@@ -85,9 +105,16 @@ function addBot() {
         token: token,
     }
     socket.emit("add_bot", data)
+
+    const response = await waitForSocketEvent("room_status")
+
+    if (!response.success) {
+        showInputError("lobby-error", response.message!)
+        return
+    }
 }
 
-function startGame() {
+async function startGame() {
     const token = sessionStorage.getItem("token")
     if (!token) {
         return false
@@ -97,6 +124,13 @@ function startGame() {
         token: token,
     }
     socket.emit("start_game", data)
+
+    const response = await waitForSocketEvent("room_status")
+
+    if (!response.success) {
+        showInputError("lobby-error", response.message!)
+        return
+    }
 }
 
 function placeCard(index: number) {
@@ -200,7 +234,7 @@ socket.on("room_status", (data) => {
 })
 
 socket.on("error", (data) => {
-    alert(`Error: ${data.message}`)
+    console.log(`Error: ${data.err_message}`)
 })
 
 socket.on("auth", (data) => {

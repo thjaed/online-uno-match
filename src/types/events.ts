@@ -16,7 +16,7 @@ export interface ClientToServerEvents {
 }
 
 export interface ServerToClientEvents {
-    error: (data: { message: string }) => void
+    error: (data: { err_message: string }) => void
     reconnect_error: () => void
     reconnect_success: () => void
     room_existence: (data: { room_code: string, result: boolean }) => void

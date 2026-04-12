@@ -34,20 +34,21 @@ function auth(token: string, socket_id: string) {
     }
 }
 
-function newUser(player_name: string) {
+function newUser(player_name: string): User | {"err_message": string} {
     if (typeof player_name === "string" &&
         player_name.length < 20 &&
-        player_name.length >= 3
-    ) {
+        player_name.length >= 1) {
         const token = randomUUID()
         const id = randomUUID()
 
         const user: User = { id: id, name: player_name, token: token }
-
         return user
 
+    } else if (typeof player_name === "string" &&
+        player_name.length >= 20) {
+        return { "err_message": "Player name must be less than 20 characters" }
     } else {
-        return undefined
+        return { "err_message": "Invalid input" }
     }
 }
 
@@ -166,56 +167,57 @@ io.on("connection", (socket) => {
     socket.on("create_room", (data) => {
         const player_name = data.player_name
         const user = newUser(player_name)
-        if (user) {
-            socket.emit("auth", ({ user: user }))
-            updateSocket(socket.id, user.id)
 
-            const room_code = randomRoomCode()
-            const server_data = {
-                user: user,
-                room_code: room_code
-            }
-            const room = createRoom(server_data)
-            socket.join(room_code)
-            updateRoom(room.code, "create_room_event", { code: room.code })
-
-        } else {
-            socket.emit("error", { message: "Invalid input" })
+        if ("err_message" in user) {
+            socket.emit("error", { err_message: user.err_message })
+            return
         }
+
+        socket.emit("auth", ({ user: user }))
+        updateSocket(socket.id, user.id)
+
+        const room_code = randomRoomCode()
+        const server_data = {
+            user: user,
+            room_code: room_code
+        }
+        const room = createRoom(server_data)
+        socket.join(room_code)
+        updateRoom(room.code, "create_room_event", { code: room.code })
     })
 
     socket.on("join_room", (data) => {
         const player_name = data.player_name
         const user = newUser(player_name)
 
-        if (!(user &&
+        if (!(!("err_message" in user) &&
             typeof data.room_code == "string" &&
             data.room_code.length === 6
         )) {
-            socket.emit("error", { message: "Invalid input" })
+            socket.emit("error", { err_message: "Invalid input" })
             return
         }
 
         const room = getRoom(data.room_code)
 
         if (!room) {
-            socket.emit("error", { message: "Room not found" })
+            socket.emit("error", { err_message: "Room not found" })
             return
         }
 
         if (room.game.state !== "waiting") {
-            socket.emit("error", { message: "Game already started" })
+            socket.emit("error", { err_message: "Game already started" })
             return
         }
 
         if (room.game.players.length + 1 > 10) {
-            socket.emit("error", { message: "Too many players" })
+            socket.emit("error", { err_message: "Too many players" })
             return
         }
 
         for (const u of room.game.players) {
             if (u.name === player_name) {
-                socket.emit("error", { message: "Name already exists" })
+                socket.emit("error", { err_message: "Name already exists" })
                 return
             }
         }
@@ -230,24 +232,24 @@ io.on("connection", (socket) => {
     socket.on("add_bot", (data) => {
         const user_id = auth(data.token, socket.id)
         if (!user_id) {
-            socket.emit("error", { message: "Invalid input" })
+            socket.emit("error", { err_message: "Invalid input" })
             return
         }
 
         const room = getRoomFromUser(user_id)
 
         if (!room) {
-            socket.emit("error", { message: "Room not found" })
+            socket.emit("error", { err_message: "Room not found" })
             return
         }
 
         if (room.game.state !== "waiting") {
-            socket.emit("error", { message: "Game already started" })
+            socket.emit("error", { err_message: "Game already started" })
             return
         }
 
         if (room.game.players.length + 1 > 10) {
-            socket.emit("error", { message: "Too many players" })
+            socket.emit("error", { err_message: "Too many players" })
             return
         }
 
@@ -257,12 +259,12 @@ io.on("connection", (socket) => {
                 data.name.length < 20 &&
                 data.name.length >= 3
             )) {
-                socket.emit("error", { message: "Invalid input" })
+                socket.emit("error", { err_message: "Invalid input" })
             }
 
             for (const u of room.game.players) {
                 if (u.name === data.name) {
-                    socket.emit("error", { message: "Name already exists" })
+                    socket.emit("error", { err_message: "Name already exists" })
                     return
                 }
             }
@@ -280,20 +282,20 @@ io.on("connection", (socket) => {
     socket.on("start_game", (data) => {
         const user_id = auth(data.token, socket.id)
         if (!user_id) {
-            socket.emit("error", { message: "Invalid input" })
+            socket.emit("error", { err_message: "Invalid input" })
             return
         }
 
         const room = getRoomFromUser(user_id)
 
         if (!room) {
-            socket.emit("error", { message: "Invalid input" })
+            socket.emit("error", { err_message: "Invalid input" })
             return
         }
 
         const u_count = room.game.players.length
         if (u_count <= 1 || 10 < u_count) {
-            socket.emit("error", { message: "Must have 2 to 10 players" })
+            socket.emit("error", { err_message: "At least 2 players are reqired to start the game. You can add a bot to increase player count." })
             return
         }
 
@@ -315,7 +317,7 @@ io.on("connection", (socket) => {
 
                 }
                 if (!response.success) {
-                    socket.emit("error", { message: response.message! })
+                    socket.emit("error", { err_message: response.message! })
                 }
             }
         }
@@ -329,7 +331,7 @@ io.on("connection", (socket) => {
             if (room) {
                 const response = room.game.drawForPlayer(user_id)
                 if (response.type == "error") {
-                    socket.emit("error", { message: response.message! })
+                    socket.emit("error", { err_message: response.message! })
                 }
             }
         }

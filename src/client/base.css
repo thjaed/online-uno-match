@@ -59,3 +59,8 @@ input:focus {
     outline: none;
     border: 2px solid #bd7bff;
 }
+
+.error {
+  margin: 0;
+  color: #cb190b;
+}

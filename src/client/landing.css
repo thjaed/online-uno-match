@@ -18,7 +18,8 @@ body {
   font-family: "Jersey 15", sans-serif;
   font-weight: 400;
   font-style: normal;
-  font-size: clamp(50px, 20vw, 100px);
+  font-size: min(clamp(20px, 15vh, 100px),
+                clamp(20px, 20vw, 100px));
   margin: 0;
 }
 
@@ -28,10 +29,10 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 320px;
+  width: clamp(150px, 80vw, 320px);
   padding: 20px;
   border-radius: 12px;
-  gap: 0px;
+  gap: clamp(5px, 2vh, 12px);
 }
 
 #start-btn {
@@ -61,6 +62,7 @@ body {
 
 #text-separator {
   font-weight: 700;
+  margin: 3px 0;
 }
 
 #name-input-menu-title {
@@ -70,6 +72,10 @@ body {
 }
 
 #game-code-error {
+  margin-bottom: 0px;
+}
+
+#name-error {
   margin-bottom: 0px;
 }
 
@@ -96,7 +102,6 @@ body {
   padding: 20px 0;
   overflow: hidden;
   display: flex;
-  z-index: -1;
 
   >* {
     flex: 0 0 100%;
@@ -105,7 +110,16 @@ body {
 
 .card {
   opacity: 0.6;
-  z-index: -1;
+}
+
+.card_img {
+  height: clamp(50px, 20vh, 150px);
+}
+
+@media (max-height: 470px) {
+  .card_img {
+    display: none;
+  }
 }
 
 .card:nth-child(odd) {
