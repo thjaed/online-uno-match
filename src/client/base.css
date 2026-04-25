@@ -1,7 +1,4 @@
 body {
-  margin: 0;
-  height: 100vh;
-  display: flex;
   background-image: linear-gradient(to bottom, #101010, #200639);
 }
 

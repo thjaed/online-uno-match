@@ -16,22 +16,28 @@
 
 <body>
     <div id="game_view">
-        <p id="current_player"></p>
-        <img id="top_card"></img>
-        <p id="colour_effect"></p>
-        <p id="hand_title"></p>
-        <div id="hand"></div>
+        <div class="top section-content">
+            <div class="player-container"></div>
+        </div>
 
-        <label for="colour_choice">Wild colour: </label>
-        <select name="colour_choice" id="colour_choice">
-            <option value="red">Red</option>
-            <option value="blue">Blue</option>
-            <option value="green">Green</option>
-            <option value="yellow">Yellow</option>
-        </select><br>
+        <div class="centre section-content">
+            <img id="top_card"></img>
+            <div class="colour-picker" style="display: none">
+                <p class="colour-picker-label">Pick a Colour</p>
+                <button id="red" class="colour-btn">Red</button>
+                <button id="yellow" class="colour-btn">Yellow</button>
+                <button id="green" class="colour-btn">Green</button>
+                <button id="blue" class="colour-btn">Blue</button>
+            </div>
+            <p id="colour_effect"></p>
+        </div>
 
-        <button id="draw_card_btn">Draw Card</button>
+        <div class="bottom section-content">
+            <div class="hand" id="hand"></div>
+            <button id="draw_card_btn">Draw Card</button>
+        </div>
     </div>
+
     <div id="end_game_view" style="display: none">
         <h3 id="winner"></h3>
         <button id="back_to_lobby_btn">Back To Lobby</button>

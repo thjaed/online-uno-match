@@ -20,15 +20,15 @@ window.addEventListener("DOMContentLoaded", async () => {
                 }
             })
 
-            socket.once("game_status", (data) => {
+            socket.once("game_status", (data) => { 
                 if ((data.gameState === "playing" || data.gameState === "finished")
-                    && window.location.pathname !== "/game/" && sessionStorage.getItem("in_game") === "false") {
+                    && window.location.pathname !== "/game/") {
                     window.location.href = "/game"
                     return
                 }
             })
         } else {
-            sessionStorage.getItem("in_game") === "false"
+            sessionStorage.setItem("in_game", "false")
             window.location.href = "/"
         }
     }

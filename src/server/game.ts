@@ -99,7 +99,7 @@ export class Game {
         const bot = this.players[this.currentPlayerIndex]
 
         if (bot && bot.type === "bot") {
-            const delay = Math.random() * 1200 + 800
+            const delay = Math.random() * 800 + 400
 
             setTimeout(() => {
                 let placed_card = false
@@ -260,7 +260,8 @@ export class Game {
                 "name": player.name,
                 "hand_size": player.hand.length,
                 "index": i,
-                "type": player.type
+                "type": player.type,
+                "is_turn": i === this.currentPlayerIndex
             }
             players_public.push(public_player)
         }
@@ -270,7 +271,9 @@ export class Game {
             "players": players_public,
             "yourHand": viewer.hand,
             "yourIndex": this.players.indexOf(viewer),
+            "yourId": viewer.id,
             "topCard": this.getTopCard(),
+            "currentPlayerIndex": this.currentPlayerIndex,
             "currentPlayerId": this.players[this.currentPlayerIndex]!.id, // this sometimes breaks if a player leaves
             "direction": this.direction,
             "colourEffect": this.colour_effect

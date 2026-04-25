@@ -94,25 +94,50 @@ function reconnect(): Promise<boolean> {
     })
 }
 
-function placeCard(index: number) {
-    const token = sessionStorage.getItem("token")
-    if (!token) {
-        return false
-    }
+function waitForColourChoice(): Promise<Colour> {
+    return new Promise((resolve) => {
+        const colour_picker = document.getElementsByClassName("colour-picker")[0]! as HTMLDivElement
+        colour_picker.style.display = "flex"
 
-    const colour_choice = (document.getElementById("colour_choice") as HTMLSelectElement).value
+        const buttons = document.querySelectorAll(".colour-btn")
 
-    let colour
-    colour_choice ? colour = colour_choice as Colour : colour = undefined
+        for (const btn of buttons) {
+            const element = btn as HTMLButtonElement
 
-    const data: Parameters<ClientToServerEvents["place_card"]>[0] = {
-        token: token,
-        hand_index: index,
-        colour: colour
-    }
-    socket.emit("place_card", data)
+            const handler = () => {
+                colour_picker.style.display = "none"
+
+                // remove listeners so they don't stack
+                for (const b of buttons) {
+                    (b as HTMLButtonElement).removeEventListener("click", handler)
+                }
+
+                resolve(element.id as Colour)
+            }
+
+            element.addEventListener("click", handler)
+        }
+    })
 }
 
+async function placeCard(index: number, is_wild_card: boolean): Promise<void> {
+    const token = sessionStorage.getItem("token")
+    if (!token) return
+
+    let colour_choice: Colour | undefined
+
+    if (is_wild_card) {
+        colour_choice = await waitForColourChoice()
+    }
+
+    const data: Parameters<ClientToServerEvents["place_card"]>[0] = {
+        token,
+        hand_index: index,
+        colour: colour_choice
+    }
+
+    socket.emit("place_card", data)
+}
 function drawCard() {
     const token = sessionStorage.getItem("token")
     if (!token) {
@@ -158,28 +183,40 @@ socket.on("error", (data) => {
 
 socket.on("game_status", (data) => {
     if (data.gameState === "playing" && window.location.pathname === "/game/") {
-        // current player
-        let curr_name
-        let curr_hand_size
+        // player list
+        const player_list = document.getElementsByClassName("player-container")[0]! as HTMLDivElement
+        player_list.innerHTML = ""
+
         for (const player of data.players) {
-            if (player.id === data.currentPlayerId) {
-                curr_hand_size = player.hand_size
-                curr_name = player.name
-                break
+            if (player.id === data.yourId) {
+                continue
             }
+            const player_card = document.createElement("div")
+            player_card.className = "player-card"
+
+            const player_card_name = document.createElement("p")
+            player_card_name.innerText = player.name
+            player_card_name.classList.add("player-card-name")
+            if (player.is_turn) {
+                player_card.classList.add("player-active")
+            }
+            player_card.appendChild(player_card_name)
+
+            const player_card_count = document.createElement("p")
+            player_card_count.className = "player-card-count"
+            player_card_count.innerText = player.hand_size
+            player_card.appendChild(player_card_count)
+
+            player_list.appendChild(player_card)
         }
 
-        if (data.currentPlayerId === sessionStorage.getItem("id")) {
-            document.getElementById("current_player")!.innerHTML = `Your Turn`
-        } else {
-            document.getElementById("current_player")!.innerHTML = `${curr_name}'s turn (${curr_hand_size})`
-        }
 
         // top card
         const asset_name = getCardAsset(data.topCard)
         const card_element = document.getElementById("top_card")! as HTMLImageElement
         card_element.src = asset_name
         card_element.height = 150
+        card_element.className = "card_img"
 
         // colour effect
         if (data.colourEffect) {
@@ -187,10 +224,17 @@ socket.on("game_status", (data) => {
         } else {
             document.getElementById("colour_effect")!.innerHTML = ""
         }
-        // hand list
-        document.getElementById("hand_title")!.innerHTML = `Your Hand (${data.yourHand.length}):`
-        document.getElementById("hand")!.innerHTML = ""
 
+        // hand list
+        const hand_el = document.getElementById("hand")!
+        hand_el.innerHTML = ""
+        const bottom_section = document.querySelector(".bottom")!
+
+        if (data.currentPlayerIndex === data.yourIndex) {
+            bottom_section.classList.add("player-active")
+        } else {
+            bottom_section.classList.remove("player-active")
+        }
 
         for (let i = 0; i < data.yourHand.length; i++) {
             const asset_name = getCardAsset(data.yourHand[i])
@@ -199,9 +243,12 @@ socket.on("game_status", (data) => {
             card_element.src = asset_name
             card_element.height = 150
             card_element.style.cursor = "pointer"
+            card_element.className = "card_img"
+
+            const is_wild_card = data.yourHand[i].type === "wild"
 
             card_element.addEventListener("click", () => {
-                placeCard(i)
+                placeCard(i, is_wild_card)
             })
 
             document.getElementById("hand")?.appendChild(card_element)
