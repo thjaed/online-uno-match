@@ -182,6 +182,7 @@ io.on("connection", (socket) => {
         }
         const room = createRoom(server_data)
         socket.join(room_code)
+        console.log(`user ${user.name} created room ${room.code}`)
         updateRoom(room.code, "create_room_event", { code: room.code })
     })
 
@@ -225,6 +226,7 @@ io.on("connection", (socket) => {
         updateSocket(socket.id, user.id)
         const player = room.addPlayer(user, "human")
         socket.join(room.code)
+        console.log(`user ${user.name} joined room ${room.code}`)
         updateRoom(room.code, "player_join_event", { player: getPublicPlayer(player) })
     })
 
