@@ -9,6 +9,7 @@ const socket = io()
 
 window.addEventListener("DOMContentLoaded", async () => {
     sessionStorage.removeItem("action")
+    clearInput("room-code-input")
 })
 
 function roomExists(room_code: string): Promise<boolean> {
@@ -214,7 +215,7 @@ document.getElementById("submit-btn")?.addEventListener("click", async () => {
         showInputError("name-error", data.err_message)
     } else {
         sessionStorage.setItem("token", data.user.token)
-        window.location.href = "/game.html";
+        window.location.href = "/lobby";
     }
 
     clearErrors()

@@ -161,7 +161,6 @@ io.on("connection", (socket) => {
             resetRoom(room.code)
         }
         io.to(socket.id).emit("room_status", getPublicRoomStatus(room.code)!)
-        console.log(room.game.state)
     })
 
     socket.on("create_room", (data) => {
@@ -313,9 +312,6 @@ io.on("connection", (socket) => {
 
             if (room) {
                 const response = room.game.placeCard(user_id, data.hand_index, data.colour)
-                if (response.success && response.won) {
-
-                }
                 if (!response.success) {
                     socket.emit("error", { err_message: response.message! })
                 }

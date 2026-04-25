@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Jersey+15&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Jersey+15&family=Play:wght@400;700&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="/base.css" />
+    <link rel="stylesheet" href="lobby.css" />
+    <title>UNO Online</title>
+</head>
+
+<body>
+    <div id="lobby_view">
+        <header>
+            <h1 class="header-title">UNO Online</h1>
+            <div class="game-code-group">
+                <h1 class="game-code-label">Game Code:</h1>
+                <h1 class="code"></h1>
+            </div>
+        </header>
+        <div class="centre-content">
+            <h2 class="centre-content-title">Players</h2>
+            <div class="table-wrapper">
+                <table class="player-list"></table>
+            </div>
+            <div class="centre-content-btns">
+                <div class="left-btns">
+                    <button class="centre-btn" id="leave-btn">Leave</button>
+                </div>
+                <div class="right-btns">
+                    <button class="centre-btn" id="add-bot-btn">Add Bot</button>
+                    <button class="centre-btn" id="start-game-btn">Start Game</button>
+                </div>
+            </div>
+            <p id="lobby-error" class="error" style="display: none"></p>
+        </div>
+    </div>
+</body>
+<script src="/socket.io/socket.io.js"></script>
+<script type="module" src="lobby.js"></script>
+
+</html>

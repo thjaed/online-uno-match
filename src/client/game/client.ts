@@ -1,6 +1,7 @@
 import type { Socket } from "socket.io-client"
-import type { ClientToServerEvents, ServerToClientEvents } from "../types/events.js"
-import type { Card, Colour } from "../types/game.js"
+import type { ClientToServerEvents, ServerToClientEvents } from "../../types/events.js"
+import type { Colour } from "../../types/game.js"
+import { getCardAsset } from "../base.js"
 
 declare const io: () => Socket<ServerToClientEvents, ClientToServerEvents>
 
@@ -8,15 +9,29 @@ const socket = io()
 
 
 window.addEventListener("DOMContentLoaded", async () => {
+    sessionStorage.setItem("in_game", "true")
     const token = sessionStorage.getItem("token")
 
-    if (token && !window.location.search) {
+    if (token) {
         const success = await reconnect()
-        const page = sessionStorage.getItem("page")
 
-        if (success && page) {
-            show(page)
-            return
+        if (success) {
+            socket.once("room_status", (data) => {
+                if (data.game_state === "waiting" && window.location.pathname !== "/lobby/") {
+                    window.location.href = "/lobby"
+                    return
+                }
+            })
+
+            socket.once("game_status", (data) => {
+                if ((data.gameState === "playing" || data.gameState === "finished")
+                    && window.location.pathname !== "/game/") {
+                    window.location.href = "/game"
+                    return
+                }
+            })
+        } else {
+            window.location.href = "/"
         }
     }
 })
@@ -35,42 +50,26 @@ function show(viewId: string) {
     }
 
     document.getElementById(viewId)!.style.display = style
-    sessionStorage.setItem("page", viewId)
+    sessionStorage.setItem("view_id", viewId)
 }
 
-function showInputError(elementId: string, error: string): void {
-    const e = (document.getElementById(elementId)! as HTMLParagraphElement)
-    e.textContent = error
-    e.style.display = "block"
-}
-
-function getCardAsset(card: Card): string {
-    let asset_name
-    if (card.type === "number" || card.type == "action") {
-        asset_name = `assets/${card.colour}_${card.value}.svg`
-    } else {
-        asset_name = `assets/${card.value}.svg`
-    }
-    return asset_name
-}
-
-
-
-function waitForSocketEvent(idealResponse: keyof ServerToClientEvents): Promise<{ "success": boolean, message?: string, data?: any }> {
+export function waitForSocketEvent(idealResponse: keyof ServerToClientEvents):
+    Promise<{ "success": boolean, message?: string, data?: any }> {
     return new Promise((resolve) => {
         setTimeout(() => {
-            resolve({"success": false, "message": "Timed out"})
+            resolve({ "success": false, "message": "Timed out" })
         }, 1000)
 
         socket.once("error", (data) => {
-            resolve({"success": false, message: data.err_message})
+            resolve({ "success": false, message: data.err_message })
         })
 
         socket.once(idealResponse, (data: any) => {
-            resolve({"success": true, data: data})
+            resolve({ "success": true, data: data })
         })
     })
 }
+
 
 function reconnect(): Promise<boolean> {
     return new Promise((resolve) => {
@@ -80,7 +79,7 @@ function reconnect(): Promise<boolean> {
 
         socket.emit("reconnect", data)
 
-        const timeout = setTimeout(() => {
+        setTimeout(() => {
             resolve(false)
         }, 3000)
 
@@ -93,44 +92,6 @@ function reconnect(): Promise<boolean> {
             resolve(true)
         })
     })
-}
-
-async function addBot() {
-    const token = sessionStorage.getItem("token")
-    if (!token) {
-        return false
-    }
-
-    const data: Parameters<ClientToServerEvents["add_bot"]>[0] = {
-        token: token,
-    }
-    socket.emit("add_bot", data)
-
-    const response = await waitForSocketEvent("room_status")
-
-    if (!response.success) {
-        showInputError("lobby-error", response.message!)
-        return
-    }
-}
-
-async function startGame() {
-    const token = sessionStorage.getItem("token")
-    if (!token) {
-        return false
-    }
-
-    const data: Parameters<ClientToServerEvents["start_game"]>[0] = {
-        token: token,
-    }
-    socket.emit("start_game", data)
-
-    const response = await waitForSocketEvent("room_status")
-
-    if (!response.success) {
-        showInputError("lobby-error", response.message!)
-        return
-    }
 }
 
 function placeCard(index: number) {
@@ -174,23 +135,8 @@ function resetRoom() {
         token: token,
     }
     socket.emit("reset_room", data)
+    window.location.href = "/lobby"
 }
-
-
-document.getElementById("leave-btn")?.addEventListener("click", () => {
-    // when leave button pressed
-    window.location.href = "/"
-})
-
-document.getElementById("add-bot-btn")?.addEventListener("click", () => {
-    // when add bot button pressed
-    addBot()
-})
-
-document.getElementById("start-game-btn")?.addEventListener("click", () => {
-    // when start game button pressed
-    startGame()
-})
 
 
 document.getElementById("draw_card_btn")?.addEventListener("click", () => {
@@ -205,46 +151,13 @@ document.getElementById("back_to_lobby_btn")?.addEventListener("click", () => {
 
 
 
-
-socket.on("room_status", (data) => {
-    if (data.game_state === "waiting") {
-        // room status recieved
-        show("lobby_view")
-        const code = data.room_code
-        document.getElementsByClassName("code")[0]!.innerHTML = `${code}`
-
-        // update player list
-        const table = document.getElementsByClassName("player-list")[0]!
-        table.innerHTML = ''
-
-        for (const p of data.public_players) {
-            const row = document.createElement("tr")
-            const playerEl = document.createElement("td")
-            playerEl.className = "player"
-            if (p.type === "bot") {
-                playerEl.innerHTML = `${p.name} (Bot)`
-            } else {
-                playerEl.innerHTML = p.name
-            }
-
-            row.appendChild(playerEl)
-            table.appendChild(row)
-        }
-    }
-})
-
 socket.on("error", (data) => {
     console.log(`Error: ${data.err_message}`)
 })
 
-socket.on("auth", (data) => {
-    sessionStorage.setItem("token", data.user.token)
-    sessionStorage.setItem("name", data.user.name)
-    sessionStorage.setItem("id", data.user.id)
-})
 
 socket.on("game_status", (data) => {
-    if (data.gameState === "playing") {
+    if (data.gameState === "playing" && window.location.pathname === "/game/") {
         // current player
         let curr_name
         let curr_hand_size
@@ -293,7 +206,7 @@ socket.on("game_status", (data) => {
 
             document.getElementById("hand")?.appendChild(card_element)
         }
-        if (sessionStorage.getItem("page") !== "game_view") {
+        if (sessionStorage.getItem("view_id") !== "game_view") {
             show("game_view")
         }
     }
