@@ -1,5 +1,6 @@
 body {
     margin: 0;
+    display: flex;
 }
 
 #game_view {
@@ -19,7 +20,7 @@ body {
     display: flex;
     background-color: #231641;
     border-radius: 12px;
-    padding: 20px;
+    padding: min(clamp(5px, 2vw, 20px), clamp(5px, 2vh, 20px));
 }
 
 .top {
@@ -31,7 +32,7 @@ body {
 }
 
 .bottom {
-    gap: 20px;
+    gap: clamp(5px, 2vw, 20px);
 }
 
 .player-container {
@@ -68,20 +69,25 @@ p {
 #hand {
     display: flex;
     gap: clamp(1px, 0.5vw, 15px);
+    flex-wrap: wrap;
 }
 
 .player-active {
     border: 3px solid #fff01a;
 }
 
-.card_img {
-    height: min(clamp(50px, 20vh, 150px), clamp(50px, 32vw, 150px));
+.card-img {
+    height: clamp(110px, 30vh, 150px);
+}
+
+.deck-card {
+    height: min(clamp(110px, 20vh, 150px), clamp(110px, 15vw, 150px));
 }
 
 #draw_card_btn {
-    height: clamp(50px, 20vh, 150px);
-    padding-left: 15px;
-    padding-right: 15px;
+    height: min(clamp(110px, 20vh, 150px), clamp(110px, 15vw, 150px));
+    padding-left: clamp(3px, 1vw, 15px);
+    padding-right: clamp(3px, 1vw, 15px);
     font-weight: 500;
     font-size: 20px;
 }

@@ -43,8 +43,8 @@ function show(viewId: string) {
     })
 
     let style
-    if (viewId === "lobby_view") {
-        style = "grid"
+    if (viewId === "game_view") {
+        style = "flex"
     } else {
         style = "block"
     }
@@ -216,7 +216,7 @@ socket.on("game_status", (data) => {
         const card_element = document.getElementById("top_card")! as HTMLImageElement
         card_element.src = asset_name
         card_element.height = 150
-        card_element.className = "card_img"
+        card_element.classList.add("card-img")
 
         // colour effect
         if (data.colourEffect) {
@@ -243,7 +243,7 @@ socket.on("game_status", (data) => {
             card_element.src = asset_name
             card_element.height = 150
             card_element.style.cursor = "pointer"
-            card_element.className = "card_img"
+            card_element.classList.add("card-img", "deck-card")
 
             const is_wild_card = data.yourHand[i].type === "wild"
 
@@ -261,7 +261,7 @@ socket.on("game_status", (data) => {
         } else {
             btn!.innerText = `Draw ${data.yourToDraw} Cards`
         }
-        
+
         if (sessionStorage.getItem("view_id") !== "game_view") {
             show("game_view")
         }
