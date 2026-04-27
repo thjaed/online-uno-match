@@ -4,6 +4,7 @@ export type Player = {
     id: string
     name: string
     hand: Card[]
+    toDraw: number
     type: "human" | "bot"
 }
 

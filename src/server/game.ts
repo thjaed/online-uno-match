@@ -79,8 +79,12 @@ export class Game {
         this.botPlay()
     }
 
-    isCardValid(card: Card) {
+    isCardValid(card: Card, toDraw: number) {
         const top = this.getTopCard()
+
+        if (card.value !== "draw2" && card.value !== "wild_draw4" && (toDraw > 0)) {
+            return false
+        }
 
         if (card.type === "wild") { //is wild card
             return true
@@ -105,7 +109,7 @@ export class Game {
                 let placed_card = false
 
                 for (const c of bot.hand) {
-                    if (this.isCardValid(c)) {
+                    if (this.isCardValid(c, bot.toDraw)) {
                         this.placeCard(bot.id, bot.hand.indexOf(c), this.randomColour())
                         placed_card = true
                         break
@@ -141,7 +145,7 @@ export class Game {
 
         const card = player.hand[hand_index]!
 
-        if (!(this.isCardValid(card))) {
+        if (!(this.isCardValid(card, player.toDraw))) {
             return { success: false, message: "Card not valid", hand: [], won: false }
         }
 
@@ -154,7 +158,7 @@ export class Game {
             return { success: true, message: "", won: true, hand: player.hand }
         }
 
-        const effect = this.useEffect(card, chosen_colour)
+        const effect = this.useEffect(card, chosen_colour, player)
 
         if (effect.action === "skipped") {
             this.nextPlayer(true)
@@ -166,7 +170,7 @@ export class Game {
         return { success: true, message: "", won: false, hand: player.hand }
     }
 
-    useEffect(card: Card, chosen_colour?: Colour): { action: "drew" | "skipped" | null, colour_change: boolean } {
+    useEffect(card: Card, chosen_colour?: Colour, currentPlayer?: Player): { action: "drew" | "skipped" | null, colour_change: boolean } {
         // wild colour
         if (card.type === "wild" && chosen_colour) {
             this.colour_effect = chosen_colour
@@ -188,10 +192,14 @@ export class Game {
             const qty = card.value === "draw2" ? 2 : 4 // set draw quantity
             const target = this.players[this.getNextPlayer()]!
 
-            for (let i = 0; i < qty; i++) {
-                // give next player a card
-                target.hand.push(this.drawCard())
+            if (currentPlayer) {
+                target.toDraw += qty + currentPlayer.toDraw
+                currentPlayer.toDraw = 0
+            } else {
+                target.toDraw += qty
             }
+            
+            console.log(`player ${target.name} must draw ${target.toDraw} cards next`)
 
             return { action: "drew", colour_change: colour_changed }
 
@@ -233,12 +241,22 @@ export class Game {
             return { type: "error", message: "Not your turn" }
         }
 
-        const card = this.drawCard()
-        player.hand.push(card)
+        let count: number
 
+        player.toDraw > 0 ? count = player.toDraw : count = 1
+
+        for (let c = 0; c < count; c++) {
+            const card = this.drawCard()
+            player.hand.push(card)
+        }
+
+        console.log(`player ${player.name} drew ${count} cards`)
+        
+        player.toDraw = 0
+        console.log(`set ${player.name} to draw 0`)
         this.nextPlayer(false)
 
-        update("draw_card_event", this.room_code, { player: getPublicPlayer(player), card: card })
+        update("draw_card_event", this.room_code, { player: getPublicPlayer(player) })
 
         return { type: "success" }
     }
@@ -272,6 +290,7 @@ export class Game {
             "yourHand": viewer.hand,
             "yourIndex": this.players.indexOf(viewer),
             "yourId": viewer.id,
+            "yourToDraw": viewer.toDraw,
             "topCard": this.getTopCard(),
             "currentPlayerIndex": this.currentPlayerIndex,
             "currentPlayerId": this.players[this.currentPlayerIndex]!.id, // this sometimes breaks if a player leaves

@@ -253,6 +253,15 @@ socket.on("game_status", (data) => {
 
             document.getElementById("hand")?.appendChild(card_element)
         }
+
+        // Draw card button
+        const btn = document.getElementById("draw_card_btn") as HTMLButtonElement
+        if (data.yourToDraw === 0) {
+            btn!.innerText = "Draw Card"
+        } else {
+            btn!.innerText = `Draw ${data.yourToDraw} Cards`
+        }
+        
         if (sessionStorage.getItem("view_id") !== "game_view") {
             show("game_view")
         }

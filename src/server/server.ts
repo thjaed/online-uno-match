@@ -275,7 +275,7 @@ io.on("connection", (socket) => {
         } else {
             name = `bot ${randomRoomCode()}` // temp
         }
-        const bot: Player = { id: randomUUID(), name: name, hand: [], type: "bot" }
+        const bot: Player = { id: randomUUID(), name: name, hand: [], toDraw: 0, type: "bot" }
         room.addBot(bot)
         updateRoom(room.code, "player_join_event", { player: getPublicPlayer(bot) })
     })
