@@ -215,6 +215,7 @@ document.getElementById("submit-btn")?.addEventListener("click", async () => {
         showInputError("name-error", data.err_message)
     } else {
         sessionStorage.setItem("token", data.user.token)
+        sessionStorage.setItem("id", data.user.id)
         window.location.href = "/lobby";
     }
 

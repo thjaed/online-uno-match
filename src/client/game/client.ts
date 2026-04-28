@@ -42,14 +42,7 @@ function show(viewId: string) {
         (el as HTMLElement).style.display = "none"
     })
 
-    let style
-    if (viewId === "game_view") {
-        style = "flex"
-    } else {
-        style = "block"
-    }
-
-    document.getElementById(viewId)!.style.display = style
+    document.getElementById(viewId)!.style.display = "flex"
     sessionStorage.setItem("view_id", viewId)
 }
 
@@ -86,6 +79,7 @@ function reconnect(): Promise<boolean> {
         socket.once("reconnect_error", () => {
             resolve(false)
             sessionStorage.removeItem("token")
+            sessionStorage.removeItem("id")
         })
 
         socket.once("reconnect_success", () => {
@@ -138,6 +132,7 @@ async function placeCard(index: number, is_wild_card: boolean): Promise<void> {
 
     socket.emit("place_card", data)
 }
+
 function drawCard() {
     const token = sessionStorage.getItem("token")
     if (!token) {
@@ -148,6 +143,18 @@ function drawCard() {
         token: token,
     }
     socket.emit("draw_card", data)
+}
+
+function callUno() {
+    const token = sessionStorage.getItem("token")
+    if (!token) {
+        return false
+    }
+
+    const data: Parameters<ClientToServerEvents["call_uno"]>[0] = {
+        token: token,
+    }
+    socket.emit("call_uno", data)
 }
 
 function resetRoom() {
@@ -164,6 +171,10 @@ function resetRoom() {
 }
 
 
+document.getElementById("call_uno_btn")?.addEventListener("click", () => {
+    callUno()
+})
+
 document.getElementById("draw_card_btn")?.addEventListener("click", () => {
     // when draw card button pressed
     drawCard()
@@ -178,6 +189,24 @@ document.getElementById("back_to_lobby_btn")?.addEventListener("click", () => {
 
 socket.on("error", (data) => {
     console.log(`Error: ${data.err_message}`)
+})
+
+socket.on("uno_penalty_event", (data) => {
+    if (data.player.id === sessionStorage.getItem("id")) {
+        alert(`You didn't call UNO! ${data.cardQty} cards were dealt to you. Press the button next time!`)
+    }
+})
+
+socket.on("uno_call_event", (data) => {
+    if (data.player.id !== sessionStorage.getItem("id")) return
+
+    const btn = document.getElementById("call_uno_btn") as HTMLButtonElement
+
+    btn.innerText = "Saved!"
+
+    setTimeout(() => {
+        btn.innerText = "Call UNO"
+    }, 1500)
 })
 
 

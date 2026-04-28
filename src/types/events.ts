@@ -13,6 +13,7 @@ export interface ClientToServerEvents {
     start_game: (data: { token: string }) => void
     place_card: (data: { token: string, hand_index: number, colour: Colour | undefined }) => void
     draw_card: (data: { token: string }) => void
+    call_uno: (data: { token: string }) => void
 }
 
 export interface ServerToClientEvents {
@@ -34,6 +35,9 @@ export interface ServerToClientEvents {
     game_end_event: (data: { winner: PublicPlayer }) => void
     player_join_event: (data: { player: PublicPlayer }) => void
     player_leave_event: (data: { player: PublicPlayer }) => void
+    uno_penalty_event: (data: { player: PublicPlayer, cardQty: number }) => void
+    uno_warning_event: (data: { player: PublicPlayer, timeout: number }) => void
+    uno_call_event: (data: { player: PublicPlayer }) => void
 }
 
 export type game_event = (
@@ -43,5 +47,8 @@ export type game_event = (
     "place_card_event" |
     "draw_card_event" |
     "game_start_event" |
-    "game_end_event"
+    "game_end_event" |
+    "uno_penalty_event" |
+    "uno_warning_event" |
+    "uno_call_event"
 )

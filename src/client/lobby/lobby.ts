@@ -82,6 +82,7 @@ function reconnect(): Promise<boolean> {
         socket.once("reconnect_error", () => {
             resolve(false)
             sessionStorage.removeItem("token")
+            sessionStorage.removeItem("id")
         })
 
         socket.once("reconnect_success", () => {
@@ -166,7 +167,6 @@ document.getElementById("back_to_lobby_btn")?.addEventListener("click", () => {
 })
 
 socket.on("room_status", (data) => {
-    console.log("room status")
     if (data.game_state === "waiting") {
         // room status recieved
         const code = data.room_code

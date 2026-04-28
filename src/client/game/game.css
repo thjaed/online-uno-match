@@ -84,7 +84,7 @@ p {
     height: min(clamp(110px, 20vh, 150px), clamp(110px, 15vw, 150px));
 }
 
-#draw_card_btn {
+.bottom-btn {
     height: min(clamp(110px, 20vh, 150px), clamp(110px, 15vw, 150px));
     padding-left: clamp(3px, 1vw, 15px);
     padding-right: clamp(3px, 1vw, 15px);

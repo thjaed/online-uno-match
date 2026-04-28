@@ -18,7 +18,14 @@ export class Room {
     }
 
     addPlayer(user: User, type: Player["type"]) {
-        const player: Player = { id: user.id, hand: [], toDraw: 0, name: user.name, type: type }
+        const player: Player = {
+            id: user.id,
+            hand: [],
+            toDraw: 0,
+            RequiresUnoCall: false,
+            name: user.name,
+            type: type
+        }
 
         this.users.push(user)
         this.game.players.push(player)
@@ -137,7 +144,14 @@ export function createRoom(data: ServerCreateRoomData) {
     }
 
     const user_id = data.user.id
-    const player: Player = { id: user_id, hand: [], toDraw: 0, name: data.user.name, type: "human" }
+    const player: Player = {
+        id: user_id,
+        hand: [],
+        toDraw: 0,
+        RequiresUnoCall: false,
+        name: data.user.name,
+        type: "human"
+    }
     const user: User = { id: user_id, token: data.user.token, name: data.user.name }
     const game = new Game([player], room_code)
     const room = new Room(room_code, game, [user])
@@ -151,7 +165,14 @@ export function resetRoom(room_code: string) {
     if (room) {
         let players: Player[] = []
         for (const p of room.game.players) {
-            let player: Player = { id: p.id, name: p.name, hand: [], toDraw: 0, type: p.type }
+            let player: Player = {
+                id: p.id,
+                name: p.name,
+                hand: [],
+                toDraw: 0,
+                RequiresUnoCall: false,
+                type: p.type
+            }
             players.push(player)
         }
         const game = new Game(players, room.code)

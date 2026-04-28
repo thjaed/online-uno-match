@@ -5,6 +5,8 @@ export type Player = {
     name: string
     hand: Card[]
     toDraw: number
+    unoTimeout?: NodeJS.Timeout
+    RequiresUnoCall: boolean
     type: "human" | "bot"
 }
 

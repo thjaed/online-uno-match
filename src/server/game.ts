@@ -156,6 +156,9 @@ export class Game {
         if (player.hand.length === 0) {
             this.endGame(player, card)
             return { success: true, message: "", won: true, hand: player.hand }
+        } else if (player.hand.length === 1 && player.type === "human") {
+            // Player needs to call uno
+            this.startUnoTimeout(player)
         }
 
         const effect = this.useEffect(card, chosen_colour, player)
@@ -198,8 +201,6 @@ export class Game {
             } else {
                 target.toDraw += qty
             }
-            
-            console.log(`player ${target.name} must draw ${target.toDraw} cards next`)
 
             return { action: "drew", colour_change: colour_changed }
 
@@ -210,8 +211,44 @@ export class Game {
         return { action: null, colour_change: false }
     }
 
-    endGame(player: Player, card: Card) {
+    startUnoTimeout(player: Player): void {
+        if (!(player.hand.length === 1 && player.type === "human")) {
+            return
+        }
 
+        const time = 5000
+        const penalty = 2
+
+        player.unoTimeout = setTimeout(() => {
+            for (let c = 0; c < penalty; c++) {
+                const card = this.drawCard()
+                player.hand.push(card)
+            }
+            player.RequiresUnoCall = false
+            update("uno_penalty_event", this.room_code, { player: getPublicPlayer(player), cardQty: penalty })
+        }, time)
+        player.RequiresUnoCall = true
+        update("uno_warning_event", this.room_code, { player: getPublicPlayer(player), timeout: time })
+    }
+
+    callUno(player_id: string): void {
+        if (this.state !== "playing") {
+            return
+        }
+
+        const player = this.players.find(x => x.id === player_id)
+        if (player === undefined) {
+            return
+        }
+
+        if (player.RequiresUnoCall && player.unoTimeout && player.hand.length === 1) {
+            clearTimeout(player.unoTimeout)
+            player.RequiresUnoCall = false
+            update("uno_call_event", this.room_code, { player: getPublicPlayer(player) })
+        }
+    }
+
+    endGame(player: Player, card: Card) {
         this.state = "finished"
         this.winner = player
         update("game_end_event", this.room_code, { winner: getPublicPlayer(player), card: card })
@@ -250,10 +287,8 @@ export class Game {
             player.hand.push(card)
         }
 
-        console.log(`player ${player.name} drew ${count} cards`)
-        
+
         player.toDraw = 0
-        console.log(`set ${player.name} to draw 0`)
         this.nextPlayer(false)
 
         update("draw_card_event", this.room_code, { player: getPublicPlayer(player) })

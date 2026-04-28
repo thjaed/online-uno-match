@@ -275,7 +275,7 @@ io.on("connection", (socket) => {
         } else {
             name = `bot ${randomRoomCode()}` // temp
         }
-        const bot: Player = { id: randomUUID(), name: name, hand: [], toDraw: 0, type: "bot" }
+        const bot: Player = { id: randomUUID(), name: name, hand: [], toDraw: 0, RequiresUnoCall: false, type: "bot" }
         room.addBot(bot)
         updateRoom(room.code, "player_join_event", { player: getPublicPlayer(bot) })
     })
@@ -334,6 +334,18 @@ io.on("connection", (socket) => {
             }
         }
 
+    })
+
+    socket.on("call_uno", (data) => {
+        const user_id = auth(data.token, socket.id)
+        if (!user_id) {
+            return
+        }
+        const room = getRoomFromUser(user_id)
+        if (!room) {
+            return
+        }
+        room.game.callUno(user_id)
     })
 
     socket.on("disconnect", () => {
