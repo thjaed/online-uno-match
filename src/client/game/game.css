@@ -12,8 +12,36 @@ body {
     height: 100vh;
 }
 
-.centre-content {
+#end_game_view {
     display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+}
+
+.end-centre {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #231641;
+  padding: clamp(20px, 2vw, 30px);
+  border-radius: 12px;
+  gap: clamp(5px, 2vh, 12px);
+}
+
+#winner {
+    font-weight: 600;
+    font-size: clamp(20px, 15vw, 50px);
+    padding-bottom: clamp(10px, 5vh, 30px);
+}
+
+#back_to_lobby_btn {
+    width: 100%;
+    padding: 10px;
+    font-size: 22px;
 }
 
 .section-content {
